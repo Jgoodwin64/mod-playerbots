@@ -5,10 +5,12 @@
 #include "AiObject.h"
 #include "Playerbots.h"
 
+// Constructor for AiObject
 AiObject::AiObject(PlayerbotAI* botAI) : PlayerbotAIAware(botAI), bot(botAI->GetBot()), context(botAI->GetAiObjectContext()), chat(botAI->GetChatHelper())
 {
 }
 
+// Get the master player
 Player* AiObject::GetMaster()
 {
     return botAI->GetMaster();

@@ -7,15 +7,21 @@
 
 #include "AiObject.h"
 
+// Forward declarations
 class Action;
 class PlayerbotAI;
 
+// Class representing a multiplier used in AI calculations
 class Multiplier : public AiNamedObject
 {
     public:
+        // Constructor initializing the multiplier with a bot AI and a name
         Multiplier(PlayerbotAI* botAI, std::string const name) : AiNamedObject(botAI, name)  {}
+        
+        // Virtual destructor for the multiplier class
         virtual ~Multiplier() { }
 
+        // Virtual function to get the value of the multiplier, defaulting to 1.0
         virtual float GetValue([[maybe_unused]] Action* action) { return 1.0f; }
 };
 

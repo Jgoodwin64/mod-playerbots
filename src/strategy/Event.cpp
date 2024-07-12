@@ -5,11 +5,13 @@
 #include "Event.h"
 #include "Playerbots.h"
 
+// Constructor for the Event class
 Event::Event(std::string const source, ObjectGuid object, Player* owner) : source(source), owner(owner)
 {
     packet << object;
 }
 
+// Get the object GUID from the event
 ObjectGuid Event::getObject()
 {
     if (packet.empty())

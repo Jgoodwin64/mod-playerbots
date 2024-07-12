@@ -15,30 +15,33 @@ class PlayerbotAI;
 
 class AiObject : public PlayerbotAIAware
 {
-	public:
+    public:
+        // Constructor for AiObject
         AiObject(PlayerbotAI* botAI);
 
     protected:
-        Player* bot;
-        Player* GetMaster();
-        AiObjectContext* context;
-        ChatHelper* chat;
+        Player* bot; // Pointer to the bot player
+        Player* GetMaster(); // Get the master player
+        AiObjectContext* context; // Context for the AI object
+        ChatHelper* chat; // Chat helper for the AI object
 };
 
 class AiNamedObject : public AiObject
 {
     public:
+        // Constructor for AiNamedObject
         AiNamedObject(PlayerbotAI* botAI, std::string const name) : AiObject(botAI), name(name) { }
 
     public:
+        // Get the name of the AI object
         virtual std::string const getName() { return name; }
 
     protected:
-        std::string const name;
+        std::string const name; // Name of the AI object
 };
 
 //
-// TRIGGERS
+// Triggers
 //
 
 #define NEXT_TRIGGERS(name, relevance) \
@@ -254,7 +257,7 @@ class clazz : public HasCcTargetTrigger \
 }
 
 //
-// ACTIONS
+// Actions
 //
 
 #define MELEE_ACTION(clazz, spell) \
@@ -485,7 +488,7 @@ class clazz : public BuffOnPartyAction \
 // Action node
 //
 
-// node_name , action, prerequisite
+// Node_name, action, prerequisite
 #define ACTION_NODE_P(name, spell, pre) \
 static ActionNode* name(PlayerbotAI* botAI) \
 { \
@@ -495,7 +498,7 @@ static ActionNode* name(PlayerbotAI* botAI) \
         /*C*/ nullptr); \
 }
 
-// node_name , action, alternative
+// Node_name, action, alternative
 #define ACTION_NODE_A(name, spell, alt) \
 static ActionNode* name(PlayerbotAI* botAI) \
 { \
@@ -505,7 +508,7 @@ static ActionNode* name(PlayerbotAI* botAI) \
         /*C*/ nullptr); \
 }
 
-// node_name , action, continuer
+// Node_name, action, continuer
 #define ACTION_NODE_C(name, spell, con) \
 static ActionNode* name(PlayerbotAI* botAI) \
 { \

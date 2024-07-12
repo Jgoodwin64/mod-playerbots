@@ -13,115 +13,115 @@
 
 #include <map>
 
-class Action;
-class ActionNode;
-class AiObjectContext;
-class Event;
-class NextAction;
-class PlayerbotAI;
+class Action; // Forward declaration of the Action class
+class ActionNode; // Forward declaration of the ActionNode class
+class AiObjectContext; // Forward declaration of the AiObjectContext class
+class Event; // Forward declaration of the Event class
+class NextAction; // Forward declaration of the NextAction class
+class PlayerbotAI; // Forward declaration of the PlayerbotAI class
 
 enum ActionResult
 {
-    ACTION_RESULT_UNKNOWN,
-    ACTION_RESULT_OK,
-    ACTION_RESULT_IMPOSSIBLE,
-    ACTION_RESULT_USELESS,
-    ACTION_RESULT_FAILED
+    ACTION_RESULT_UNKNOWN, // Action result is unknown
+    ACTION_RESULT_OK, // Action was successful
+    ACTION_RESULT_IMPOSSIBLE, // Action is impossible
+    ACTION_RESULT_USELESS, // Action is useless
+    ACTION_RESULT_FAILED // Action failed
 };
 
 class ActionExecutionListener
 {
     public:
-        virtual ~ActionExecutionListener() { };
+        virtual ~ActionExecutionListener() { }; // Virtual destructor
 
-        virtual bool Before(Action* action, Event event) = 0;
-        virtual bool AllowExecution(Action* action, Event event) = 0;
-        virtual void After(Action* action, bool executed, Event event) = 0;
-        virtual bool OverrideResult(Action* action, bool executed, Event event) = 0;
+        virtual bool Before(Action* action, Event event) = 0; // Pure virtual method executed before action
+        virtual bool AllowExecution(Action* action, Event event) = 0; // Pure virtual method to allow action execution
+        virtual void After(Action* action, bool executed, Event event) = 0; // Pure virtual method executed after action
+        virtual bool OverrideResult(Action* action, bool executed, Event event) = 0; // Pure virtual method to override action result
 };
 
 class ActionExecutionListeners : public ActionExecutionListener
 {
     public:
-        virtual ~ActionExecutionListeners();
+        virtual ~ActionExecutionListeners(); // Virtual destructor
 
-        bool Before(Action* action, Event event) override;
-        bool AllowExecution(Action* action, Event event) override;
-        void After(Action* action, bool executed, Event event) override;
-        bool OverrideResult(Action* action, bool executed, Event event) override;
+        bool Before(Action* action, Event event) override; // Method executed before action
+        bool AllowExecution(Action* action, Event event) override; // Method to allow action execution
+        void After(Action* action, bool executed, Event event) override; // Method executed after action
+        bool OverrideResult(Action* action, bool executed, Event event) override; // Method to override action result
 
-        void Add(ActionExecutionListener* listener)
+        void Add(ActionExecutionListener* listener) // Add a listener
         {
             listeners.push_back(listener);
         }
 
-        void Remove(ActionExecutionListener* listener)
+        void Remove(ActionExecutionListener* listener) // Remove a listener
         {
             listeners.remove(listener);
         }
 
     private:
-        std::list<ActionExecutionListener*> listeners;
+        std::list<ActionExecutionListener*> listeners; // List of listeners
 };
 
 class Engine : public PlayerbotAIAware
 {
     public:
-        Engine(PlayerbotAI* botAI, AiObjectContext* factory);
+        Engine(PlayerbotAI* botAI, AiObjectContext* factory); // Constructor
 
-	    void Init();
-        void addStrategy(std::string const name);
-		void addStrategies(std::string first, ...);
-        bool removeStrategy(std::string const name);
-        bool HasStrategy(std::string const name);
-        void removeAllStrategies();
-        void toggleStrategy(std::string const name);
-        std::string const ListStrategies();
-        std::vector<std::string> GetStrategies();
-		bool ContainsStrategy(StrategyType type);
-		void ChangeStrategy(std::string const names);
-        std::string const GetLastAction() { return lastAction; }
+	    void Init(); // Initialize the engine
+        void addStrategy(std::string const name); // Add a strategy
+		void addStrategies(std::string first, ...); // Add multiple strategies
+        bool removeStrategy(std::string const name); // Remove a strategy
+        bool HasStrategy(std::string const name); // Check if a strategy exists
+        void removeAllStrategies(); // Remove all strategies
+        void toggleStrategy(std::string const name); // Toggle a strategy
+        std::string const ListStrategies(); // List all strategies
+        std::vector<std::string> GetStrategies(); // Get all strategies
+		bool ContainsStrategy(StrategyType type); // Check if strategy of a type exists
+		void ChangeStrategy(std::string const names); // Change strategy
+        std::string const GetLastAction() { return lastAction; } // Get last action
 
-	    virtual bool DoNextAction(Unit*, uint32 depth = 0, bool minimal = false);
-	    ActionResult ExecuteAction(std::string const name, Event event = Event(), std::string const qualifier = "");
+	    virtual bool DoNextAction(Unit*, uint32 depth = 0, bool minimal = false); // Perform next action
+	    ActionResult ExecuteAction(std::string const name, Event event = Event(), std::string const qualifier = ""); // Execute an action
 
-        void AddActionExecutionListener(ActionExecutionListener* listener)
+        void AddActionExecutionListener(ActionExecutionListener* listener) // Add an action execution listener
         {
             actionExecutionListeners.Add(listener);
         }
 
-        void removeActionExecutionListener(ActionExecutionListener* listener)
+        void removeActionExecutionListener(ActionExecutionListener* listener) // Remove an action execution listener
         {
             actionExecutionListeners.Remove(listener);
         }
 
-	    virtual ~Engine(void);
+	    virtual ~Engine(void); // Destructor
 
-        bool testMode;
+        bool testMode; // Test mode flag
 
     private:
-        bool MultiplyAndPush(NextAction** actions, float forceRelevance, bool skipPrerequisites, Event event, const char* pushType);
-        void Reset();
-        void ProcessTriggers(bool minimal);
-        void PushDefaultActions();
-        void PushAgain(ActionNode* actionNode, float relevance, Event event);
-        ActionNode* CreateActionNode(std::string const name);
-        Action* InitializeAction(ActionNode* actionNode);
-        bool ListenAndExecute(Action* action, Event event);
+        bool MultiplyAndPush(NextAction** actions, float forceRelevance, bool skipPrerequisites, Event event, const char* pushType); // Multiply and push actions
+        void Reset(); // Reset the engine
+        void ProcessTriggers(bool minimal); // Process triggers
+        void PushDefaultActions(); // Push default actions
+        void PushAgain(ActionNode* actionNode, float relevance, Event event); // Push action again
+        ActionNode* CreateActionNode(std::string const name); // Create action node
+        Action* InitializeAction(ActionNode* actionNode); // Initialize action
+        bool ListenAndExecute(Action* action, Event event); // Listen and execute action
 
-        void LogAction(char const* format, ...);
-        void LogValues();
+        void LogAction(char const* format, ...); // Log action
+        void LogValues(); // Log values
 
-        ActionExecutionListeners actionExecutionListeners;
+        ActionExecutionListeners actionExecutionListeners; // Action execution listeners
 
     protected:
-	    Queue queue;
-	    std::vector<TriggerNode*> triggers;
-        std::vector<Multiplier*> multipliers;
-        AiObjectContext* aiObjectContext;
-        std::map<std::string, Strategy*> strategies;
-        float lastRelevance;
-        std::string lastAction;
+	    Queue queue; // Action queue
+	    std::vector<TriggerNode*> triggers; // List of triggers
+        std::vector<Multiplier*> multipliers; // List of multipliers
+        AiObjectContext* aiObjectContext; // AI object context
+        std::map<std::string, Strategy*> strategies; // Map of strategies
+        float lastRelevance; // Last relevance value
+        std::string lastAction; // Last action performed
 };
 
 #endif

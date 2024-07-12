@@ -6,55 +6,59 @@
 #include "Playerbots.h"
 #include "Timer.h"
 
+// Return the size of the actions array
 uint32 NextAction::size(NextAction** actions)
 {
-    if (!actions)
+    if (!actions) // If actions is null, return 0
         return 0;
 
     uint32 size = 0;
-    for (size = 0; actions[size];)
+    for (size = 0; actions[size];) // Increment size until a null element is found
         ++size;
 
-    return size;
+    return size; // Return the size of the array
 }
 
+// Clone the actions array
 NextAction** NextAction::clone(NextAction** actions)
 {
-    if (!actions)
+    if (!actions) // If actions is null, return null
         return nullptr;
 
-    uint32 size = NextAction::size(actions);
+    uint32 size = NextAction::size(actions); // Get the size of the actions array
 
-    NextAction** res = new NextAction*[size + 1];
-    for (uint32 i = 0; i < size; i++)
+    NextAction** res = new NextAction*[size + 1]; // Allocate memory for the cloned array
+    for (uint32 i = 0; i < size; i++) // Copy each action
         res[i] = new NextAction(*actions[i]);
 
-    res[size] = nullptr;
+    res[size] = nullptr; // Set the last element to null
 
-    return res;
+    return res; // Return the cloned array
 }
 
+// Merge two actions arrays
 NextAction** NextAction::merge(NextAction** left, NextAction** right)
 {
-    uint32 leftSize = NextAction::size(left);
-    uint32 rightSize = NextAction::size(right);
+    uint32 leftSize = NextAction::size(left); // Get the size of the left array
+    uint32 rightSize = NextAction::size(right); // Get the size of the right array
 
-    NextAction** res = new NextAction*[leftSize + rightSize + 1];
+    NextAction** res = new NextAction*[leftSize + rightSize + 1]; // Allocate memory for the merged array
 
-    for (uint32 i = 0; i < leftSize; i++)
+    for (uint32 i = 0; i < leftSize; i++) // Copy the left array
         res[i] = new NextAction(*left[i]);
 
-    for (uint32 i = 0; i < rightSize; i++)
+    for (uint32 i = 0; i < rightSize; i++) // Copy the right array
         res[leftSize + i] = new NextAction(*right[i]);
 
-    res[leftSize + rightSize] = nullptr;
+    res[leftSize + rightSize] = nullptr; // Set the last element to null
 
-    NextAction::destroy(left);
-    NextAction::destroy(right);
+    NextAction::destroy(left); // Destroy the left array
+    NextAction::destroy(right); // Destroy the right array
 
-    return res;
+    return res; // Return the merged array
 }
 
+// Create an array of actions from a variable argument list
 NextAction** NextAction::array(uint32 nil, ...)
 {
     va_list vl;
@@ -64,49 +68,54 @@ NextAction** NextAction::array(uint32 nil, ...)
     NextAction* cur = nullptr;
     do
     {
-        cur = va_arg(vl, NextAction*);
-        ++size;
+        cur = va_arg(vl, NextAction*); // Get the next argument
+        ++size; // Increment size
     }
-    while (cur);
+    while (cur); // Continue until a null argument is found
 
     va_end(vl);
 
-    NextAction** res = new NextAction*[size];
+    NextAction** res = new NextAction*[size]; // Allocate memory for the array
     va_start(vl, nil);
-    for (uint32 i = 0; i < size; i++)
+    for (uint32 i = 0; i < size; i++) // Copy each argument into the array
         res[i] = va_arg(vl, NextAction*);
     va_end(vl);
 
-    return res;
+    return res; // Return the array
 }
 
+// Destroy the actions array
 void NextAction::destroy(NextAction** actions)
 {
-    if (!actions)
+    if (!actions) // If actions is null, return
         return;
 
-    for (uint32 i=0; actions[i]; i++)
+    for (uint32 i=0; actions[i]; i++) // Delete each action
         delete actions[i];
 
-    delete[] actions;
+    delete[] actions; // Delete the array
 }
 
+// Get the target value
 Value<Unit*>* Action::GetTargetValue()
 {
-    return context->GetValue<Unit*>(GetTargetName());
+    return context->GetValue<Unit*>(GetTargetName()); // Return the target value from the context
 }
 
+// Get the target unit
 Unit* Action::GetTarget()
 {
-    return GetTargetValue()->Get();
+    return GetTargetValue()->Get(); // Return the target unit
 }
 
+// Constructor for ActionBasket
 ActionBasket::ActionBasket(ActionNode* action, float relevance, bool skipPrerequisites, Event event) :
     action(action), relevance(relevance), skipPrerequisites(skipPrerequisites), event(event), created(getMSTime())
 {
 }
 
+// Check if the action basket is expired
 bool ActionBasket::isExpired(uint32 msecs)
 {
-    return getMSTime() - created >= msecs;
+    return getMSTime() - created >= msecs; // Return true if the time since creation is greater than or equal to msecs
 }
