@@ -10,25 +10,31 @@
 char* strstri(char const* str1, char const* str2);
 std::set<uint32> RandomItemMgr::itemCache;
 
+// Calculates a unique key based on level, class, slot, and quality of the item
 uint64 BotEquipKey::GetKey()
 {
     return level + 100 * clazz + 10000 * slot + 1000000 * quality;
 }
 
+// Predicate to determine if an item is suitable for guild tasks
 class RandomItemGuildTaskPredicate : public RandomItemPredicate
 {
     public:
         bool Apply(ItemTemplate const* proto) override
         {
+            // Exclude items that bind when picked up, are quest items, or bind when used
             if (proto->Bonding == BIND_WHEN_PICKED_UP || proto->Bonding == BIND_QUEST_ITEM || proto->Bonding == BIND_WHEN_USE)
                 return false;
 
+            // Exclude items of poor quality
             if (proto->Quality < ITEM_QUALITY_NORMAL)
                 return false;
 
+            // Include armor and weapon items of rare quality or higher
             if ((proto->Class == ITEM_CLASS_ARMOR || proto->Class == ITEM_CLASS_WEAPON) && proto->Quality >= ITEM_QUALITY_RARE)
                 return true;
 
+            // Include trade goods and consumables
             if (proto->Class == ITEM_CLASS_TRADE_GOODS || proto->Class == ITEM_CLASS_CONSUMABLE)
                 return true;
 
@@ -36,6 +42,7 @@ class RandomItemGuildTaskPredicate : public RandomItemPredicate
         }
 };
 
+// Predicate to determine if an item is a suitable reward for guild tasks
 class RandomItemGuildTaskRewardPredicate : public RandomItemPredicate
 {
     public:
@@ -43,27 +50,33 @@ class RandomItemGuildTaskRewardPredicate : public RandomItemPredicate
 
         bool Apply(ItemTemplate const* proto) override
         {
+            // Exclude items that bind when picked up, are quest items, or bind when used
             if (proto->Bonding == BIND_WHEN_PICKED_UP || proto->Bonding == BIND_QUEST_ITEM || proto->Bonding == BIND_WHEN_USE)
                 return false;
 
+            // Exclude quest items
             if (proto->Class == ITEM_CLASS_QUEST)
                 return false;
 
             if (equip)
             {
                 uint32 desiredQuality = rare ? ITEM_QUALITY_RARE : ITEM_QUALITY_UNCOMMON;
+                // Exclude items that are not of the desired quality
                 if (proto->Quality < desiredQuality || proto->Quality >= ITEM_QUALITY_EPIC)
                     return false;
 
+                // Include armor and weapon items of the desired quality
                 if (proto->Class == ITEM_CLASS_ARMOR || proto->Class == ITEM_CLASS_WEAPON)
                     return true;
             }
             else
             {
                 uint32 desiredQuality = rare ? ITEM_QUALITY_UNCOMMON : ITEM_QUALITY_NORMAL;
+                // Exclude items that are not of the desired quality
                 if (proto->Quality < desiredQuality || proto->Quality >= ITEM_QUALITY_RARE)
                     return false;
 
+                // Include trade goods and consumables
                 if (proto->Class == ITEM_CLASS_TRADE_GOODS || proto->Class == ITEM_CLASS_CONSUMABLE)
                     return true;
             }
@@ -72,18 +85,21 @@ class RandomItemGuildTaskRewardPredicate : public RandomItemPredicate
         }
 
     private:
-        bool equip;
-        bool rare;
+        bool equip;  // Whether the item is equipment
+        bool rare;   // Whether the item is rare
 };
 
+// Constructor for RandomItemMgr
 RandomItemMgr::RandomItemMgr()
 {
+    // Initialize predicates for different random item types
     predicates[RANDOM_ITEM_GUILD_TASK] = new RandomItemGuildTaskPredicate();
     predicates[RANDOM_ITEM_GUILD_TASK_REWARD_EQUIP_GREEN] = new RandomItemGuildTaskRewardPredicate(true, false);
     predicates[RANDOM_ITEM_GUILD_TASK_REWARD_EQUIP_BLUE] = new RandomItemGuildTaskRewardPredicate(true, true);
     predicates[RANDOM_ITEM_GUILD_TASK_REWARD_TRADE] = new RandomItemGuildTaskRewardPredicate(false, false);
     predicates[RANDOM_ITEM_GUILD_TASK_REWARD_TRADE_RARE] = new RandomItemGuildTaskRewardPredicate(false, true);
 
+    // Define viable slots for equipment
     viableSlots[EQUIPMENT_SLOT_HEAD].insert(INVTYPE_HEAD);
     viableSlots[EQUIPMENT_SLOT_NECK].insert(INVTYPE_NECK);
     viableSlots[EQUIPMENT_SLOT_SHOULDERS].insert(INVTYPE_SHOULDERS);
@@ -114,6 +130,7 @@ RandomItemMgr::RandomItemMgr()
     viableSlots[EQUIPMENT_SLOT_TABARD].insert(INVTYPE_TABARD);
     viableSlots[EQUIPMENT_SLOT_BACK].insert(INVTYPE_CLOAK);
 
+    // Map item stat names to item modification IDs
     weightStatLink["sta"] = ITEM_MOD_STAMINA;
     weightStatLink["str"] = ITEM_MOD_STRENGTH;
     weightStatLink["agi"] = ITEM_MOD_AGILITY;
@@ -137,6 +154,7 @@ RandomItemMgr::RandomItemMgr()
 
     weightStatLink["manargn"] = ITEM_MOD_MANA_REGENERATION;
 
+    // Map item stat names to combat rating IDs
     weightRatingLink["exprtng"] = CR_EXPERTISE;
     weightRatingLink["critstrkrtng"] = CR_CRIT_MELEE;
     weightRatingLink["hitrtng"] = CR_HIT_MELEE;
@@ -147,9 +165,9 @@ RandomItemMgr::RandomItemMgr()
     weightRatingLink["dodgertng"] = CR_DODGE;
     weightRatingLink["blockrtng"] = CR_BLOCK;
     weightRatingLink["parryrtng"] = CR_PARRY;
-
 }
 
+// Initialize the RandomItemMgr, building various caches
 void RandomItemMgr::Init()
 {
     BuildItemInfoCache();
@@ -161,12 +179,14 @@ void RandomItemMgr::Init()
     BuildTradeCache();
 }
 
+// Initialize RandomItemMgr after the Auction House bot has been initialized
 void RandomItemMgr::InitAfterAhBot()
 {
     BuildRandomItemCache();
     //BuildRarityCache();
 }
 
+// Destructor for RandomItemMgr, cleans up dynamically allocated predicates
 RandomItemMgr::~RandomItemMgr()
 {
     for (std::map<RandomItemType, RandomItemPredicate*>::iterator i = predicates.begin(); i != predicates.end(); ++i)
@@ -175,6 +195,7 @@ RandomItemMgr::~RandomItemMgr()
     predicates.clear();
 }
 
+// Handles console commands related to RandomItemMgr
 bool RandomItemMgr::HandleConsoleCommand(ChatHandler* handler, char const* args)
 {
     if (!args || !*args)
@@ -186,6 +207,7 @@ bool RandomItemMgr::HandleConsoleCommand(ChatHandler* handler, char const* args)
     return false;
 }
 
+// Query the random item cache for items matching the specified criteria
 RandomItemList RandomItemMgr::Query(uint32 level, RandomItemType type, RandomItemPredicate* predicate)
 {
     RandomItemList& list = randomItemCache[(level - 1) / 10][type];
@@ -207,6 +229,7 @@ RandomItemList RandomItemMgr::Query(uint32 level, RandomItemType type, RandomIte
     return result;
 }
 
+// Builds the random item cache from the database or item templates
 void RandomItemMgr::BuildRandomItemCache()
 {
     if (PreparedQueryResult result = PlayerbotsDatabase.Query(PlayerbotsDatabase.GetPreparedStatement(PLAYERBOTS_SEL_RNDITEM_CACHE)))
@@ -294,6 +317,7 @@ void RandomItemMgr::BuildRandomItemCache()
     }
 }
 
+// Retrieves a random item that matches the given level and type criteria
 uint32 RandomItemMgr::GetRandomItem(uint32 level, RandomItemType type, RandomItemPredicate* predicate)
 {
     RandomItemList const& list = Query(level, type, predicate);
@@ -306,6 +330,7 @@ uint32 RandomItemMgr::GetRandomItem(uint32 level, RandomItemType type, RandomIte
     return itemId;
 }
 
+// Determines if an item can be equipped based on the provided key and item template
 bool RandomItemMgr::CanEquipItem(BotEquipKey key, ItemTemplate const* proto)
 {
     if (proto->Duration & 0x80000000)
@@ -361,6 +386,7 @@ bool RandomItemMgr::CanEquipItem(BotEquipKey key, ItemTemplate const* proto)
     return true;
 }
 
+// Determines if an item can be equipped based on the new criteria
 bool RandomItemMgr::CanEquipItemNew(ItemTemplate const* proto)
 {
     if (proto->Duration & 0x80000000)
@@ -383,6 +409,7 @@ bool RandomItemMgr::CanEquipItemNew(ItemTemplate const* proto)
     return properSlot;
 }
 
+// Adds item stats to the provided stat counters
 void RandomItemMgr::AddItemStats(uint32 mod, uint8& sp, uint8& ap, uint8& tank)
 {
     switch (mod)
@@ -417,6 +444,7 @@ void RandomItemMgr::AddItemStats(uint32 mod, uint8& sp, uint8& ap, uint8& tank)
     }
 }
 
+// Checks if the provided item stats are suitable for the given class
 bool RandomItemMgr::CheckItemStats(uint8 clazz, uint8 sp, uint8 ap, uint8 tank)
 {
     switch (clazz)
@@ -442,11 +470,13 @@ bool RandomItemMgr::CheckItemStats(uint8 clazz, uint8 sp, uint8 ap, uint8 tank)
     return sp || ap || tank;
 }
 
+// Retrieves the cached equipment for the given level and inventory type
 std::vector<uint32> RandomItemMgr::GetCachedEquipments(uint32 requiredLevel, uint32 inventoryType)
 {
     return equipCacheNew[requiredLevel][inventoryType];
 }
 
+// Determines if an item should be equipped based on the player's class and spec
 bool RandomItemMgr::ShouldEquipArmorForSpec(uint8 playerclass, uint8 spec, ItemTemplate const* proto)
 {
     if (proto->InventoryType == INVTYPE_TABARD)
@@ -538,6 +568,7 @@ bool RandomItemMgr::ShouldEquipArmorForSpec(uint8 playerclass, uint8 spec, ItemT
     return resultArmorSubClass.find(proto->SubClass) != resultArmorSubClass.end();
 }
 
+// Determines if a weapon should be equipped based on the player's class and spec
 bool RandomItemMgr::ShouldEquipWeaponForSpec(uint8 playerclass, uint8 spec, ItemTemplate const* proto)
 {
     EquipmentSlots slot_mh = EQUIPMENT_SLOT_START;
@@ -1697,7 +1728,7 @@ uint32 RandomItemMgr::GetUpgrade(Player* player, std::string spec, uint8 slot, u
 
         // skip higher lvl
         if (info.minLevel > player->getLevel())
-            continue;
+            continue;         
 
         // skip too low level
         if (info.minLevel < (player->getLevel() - 10))
@@ -2358,7 +2389,7 @@ void RandomItemMgr::BuildFoodCache()
 
     for (uint32 level = 1; level <= maxLevel + 1; level += 10)
     {
-        uint32 categories[] = { 11, 59 };
+	uint32 categories[] = { 11, 59 };
         for (uint8 i = 0; i < 2; ++i)
         {
             uint32 category = categories[i];

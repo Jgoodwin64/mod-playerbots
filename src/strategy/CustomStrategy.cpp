@@ -7,8 +7,10 @@
 
 #include <regex>
 
+// Initialize the static member actionLinesCache
 std::map<std::string, std::string> CustomStrategy::actionLinesCache;
 
+// Converts a string action to a NextAction object
 NextAction* toNextAction(std::string const action)
 {
     std::vector<std::string> tokens = split(action, '!');
@@ -17,10 +19,12 @@ NextAction* toNextAction(std::string const action)
     else if (tokens.size() == 1 && !tokens[0].empty())
         return new NextAction(tokens[0], ACTION_NORMAL);
 
+    // Log error if the action string is invalid
     LOG_ERROR("playerbots", "Invalid action {}", action.c_str());
     return nullptr;
 }
 
+// Converts a string of actions to an array of NextAction pointers
 NextAction** toNextActionArray(std::string const actions)
 {
     std::vector<std::string> tokens = split(actions, ',');
@@ -33,33 +37,39 @@ NextAction** toNextActionArray(std::string const actions)
             res[index++] = na;
     }
 
+    // Mark the end of the array with a nullptr
 	res[index++] = nullptr;
     return res;
 }
 
+// Converts a string action line to a TriggerNode object
 TriggerNode* toTriggerNode(std::string const actionLine)
 {
     std::vector<std::string> tokens = split(actionLine, '>');
     if (tokens.size() == 2)
         return new TriggerNode(tokens[0], toNextActionArray(tokens[1]));
 
+    // Log error if the action line string is invalid
     LOG_ERROR("playerbots", "Invalid action line {}", actionLine.c_str());
     return nullptr;
 }
 
+// Constructor for CustomStrategy
 CustomStrategy::CustomStrategy(PlayerbotAI* botAI) : Strategy(botAI), Qualified()
 {
 }
 
+// Initializes the triggers for the strategy
 void CustomStrategy::InitTriggers(std::vector<TriggerNode*> &triggers)
 {
     if (actionLines.empty())
     {
         if (actionLinesCache[qualifier].empty())
         {
+            // Load action lines from the database for the bot
             LoadActionLines((uint32)botAI->GetBot()->GetGUID().GetCounter());
             if (actionLines.empty())
-                LoadActionLines(0);
+                LoadActionLines(0); // Load default action lines if specific ones are not found
         }
         else
         {
@@ -86,6 +96,7 @@ void CustomStrategy::InitTriggers(std::vector<TriggerNode*> &triggers)
     }
 }
 
+// Loads the action lines for the given owner from the database
 void CustomStrategy::LoadActionLines(uint32 owner)
 {
     PlayerbotsDatabasePreparedStatement* stmt = PlayerbotsDatabase.GetPreparedStatement(PLAYERBOTS_SEL_CUSTOM_STRATEGY_BY_OWNER_AND_NAME);
@@ -104,6 +115,7 @@ void CustomStrategy::LoadActionLines(uint32 owner)
     }
 }
 
+// Resets the strategy by clearing action lines and cache
 void CustomStrategy::Reset()
 {
     actionLines.clear();

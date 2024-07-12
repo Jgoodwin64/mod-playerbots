@@ -61,7 +61,6 @@ class StrategyContext : public NamedObjectContext<Strategy>
             creators["gather"] = &StrategyContext::gather; // Assigning gather strategy creator
             creators["emote"] = &StrategyContext::emote; // Assigning emote strategy creator
             creators["passive"] = &StrategyContext::passive; // Assigning passive strategy creator
-            // creators["conserve mana"] = &StrategyContext::conserve_mana;
             creators["auto save mana"] = &StrategyContext::auto_save_mana; // Assigning auto save mana strategy creator
             creators["food"] = &StrategyContext::food; // Assigning food strategy creator
             creators["chat"] = &StrategyContext::chat; // Assigning chat strategy creator
@@ -139,7 +138,6 @@ class StrategyContext : public NamedObjectContext<Strategy>
         static Strategy* gather(PlayerbotAI* botAI) { return new GatherStrategy(botAI); } // Creates GatherStrategy
         static Strategy* emote(PlayerbotAI* botAI) { return new EmoteStrategy(botAI); } // Creates EmoteStrategy
         static Strategy* passive(PlayerbotAI* botAI) { return new PassiveStrategy(botAI); } // Creates PassiveStrategy
-        // static Strategy* conserve_mana(PlayerbotAI* botAI) { return new ConserveManaStrategy(botAI); }
         static Strategy* auto_save_mana(PlayerbotAI* botAI) { return new HealerAutoSaveManaStrategy(botAI); } // Creates HealerAutoSaveManaStrategy
         static Strategy* food(PlayerbotAI* botAI) { return new UseFoodStrategy(botAI); } // Creates UseFoodStrategy
         static Strategy* chat(PlayerbotAI* botAI) { return new ChatCommandHandlerStrategy(botAI); } // Creates ChatCommandHandlerStrategy

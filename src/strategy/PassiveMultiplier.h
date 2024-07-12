@@ -9,19 +9,23 @@
 
 #include <vector>
 
+// Forward declarations
 class Action;
 class PlayerbotAI;
 
+// Class representing a passive multiplier for actions
 class PassiveMultiplier : public Multiplier
 {
     public:
+        // Constructor initializing with a bot AI
         PassiveMultiplier(PlayerbotAI* botAI);
 
+        // Function to get the value of the multiplier for a given action
         float GetValue(Action* action) override;
 
     private:
-        static std::vector<std::string> allowedActions;
-        static std::vector<std::string> allowedParts;
+        static std::vector<std::string> allowedActions;  // Vector of allowed action names
+        static std::vector<std::string> allowedParts;    // Vector of allowed action name parts
 };
 
 #endif

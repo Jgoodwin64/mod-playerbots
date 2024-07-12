@@ -2,19 +2,21 @@
  * Copyright (C) 2016+ AzerothCore <www.azerothcore.org>, released under GNU GPL v2 license, you may redistribute it and/or modify it under version 2 of the License, or (at your option), any later version.
  */
 
-#include "GuildTaskMgr.h"
-#include "ChatHelper.h"
-#include "GuildMgr.h"
-#include "Group.h"
-#include "Mail.h"
-#include "MapMgr.h"
-#include "Playerbots.h"
-#include "PlayerbotFactory.h"
-#include "RandomItemMgr.h"
-#include "ServerFacade.h"
+#include "GuildTaskMgr.h"  // Include the GuildTaskMgr header file
+#include "ChatHelper.h"    // Include the ChatHelper header file
+#include "GuildMgr.h"      // Include the GuildMgr header file
+#include "Group.h"         // Include the Group header file
+#include "Mail.h"          // Include the Mail header file
+#include "MapMgr.h"        // Include the MapMgr header file
+#include "Playerbots.h"    // Include the Playerbots header file
+#include "PlayerbotFactory.h"  // Include the PlayerbotFactory header file
+#include "RandomItemMgr.h"     // Include the RandomItemMgr header file
+#include "ServerFacade.h"      // Include the ServerFacade header file
 
+// Function declaration for case-insensitive substring search
 char* strstri(char const* str1, char const* str2);
 
+// Enumeration for guild task types
 enum GuildTaskType
 {
     GUILD_TASK_TYPE_NONE = 0,
@@ -22,6 +24,7 @@ enum GuildTaskType
     GUILD_TASK_TYPE_KILL = 2
 };
 
+// Update guild task for a player
 void GuildTaskMgr::Update(Player* player, Player* guildMaster)
 {
     if (!sPlayerbotAIConfig->guildTaskEnabled)
@@ -29,8 +32,8 @@ void GuildTaskMgr::Update(Player* player, Player* guildMaster)
 
     if (!GetTaskValue(0, 0, "advert_cleanup"))
     {
-        CleanupAdverts();
-        RemoveDuplicatedAdverts();
+        CleanupAdverts();  // Clean up old advertisements
+        RemoveDuplicatedAdverts();  // Remove duplicate advertisements
         SetTaskValue(0, 0, "advert_cleanup", 1, sPlayerbotAIConfig->guildTaskAdvertCleanupTime);
     }
 
@@ -42,7 +45,7 @@ void GuildTaskMgr::Update(Player* player, Player* guildMaster)
     if (!player->IsFriendlyTo(guildMaster))
         return;
 
-	Guild* guild = sGuildMgr->GetGuildById(guildMaster->GetGuildId());
+    Guild* guild = sGuildMgr->GetGuildById(guildMaster->GetGuildId());
 
     DenyReason reason = PLAYERBOT_DENY_NONE;
     PlayerbotSecurityLevel secLevel = masterBotAI->GetSecurity()->LevelFor(player, &reason);
@@ -59,6 +62,7 @@ void GuildTaskMgr::Update(Player* player, Player* guildMaster)
     uint32 activeTask = GetTaskValue(owner, guildId, "activeTask");
     if (!activeTask)
     {
+        // Initialize task values
         SetTaskValue(owner, guildId, "killTask", 0, 0);
         SetTaskValue(owner, guildId, "itemTask", 0, 0);
         SetTaskValue(owner, guildId, "itemCount", 0, 0);
@@ -135,6 +139,7 @@ void GuildTaskMgr::Update(Player* player, Player* guildMaster)
     CharacterDatabase.CommitTransaction(trans);
 }
 
+// Create a new guild task for a player
 uint32 GuildTaskMgr::CreateTask(Player* owner, uint32 guildId)
 {
     switch (urand(0, 1))
@@ -148,6 +153,7 @@ uint32 GuildTaskMgr::CreateTask(Player* owner, uint32 guildId)
     }
 }
 
+// Predicate class for filtering random items by player skills
 class RandomItemBySkillGuildTaskPredicate : public RandomItemPredicate
 {
 public:
@@ -171,6 +177,7 @@ private:
     Player* player;
 };
 
+// Create an item task for a player
 bool GuildTaskMgr::CreateItemTask(Player* player, uint32 guildId)
 {
     if (!player || player->getLevel() < 5)
@@ -180,7 +187,7 @@ bool GuildTaskMgr::CreateItemTask(Player* player, uint32 guildId)
     uint32 itemId = sRandomItemMgr->GetRandomItem(player->getLevel() - 5, RANDOM_ITEM_GUILD_TASK, &predicate);
     if (!itemId)
     {
-        LOG_ERROR("playerbots",  "{} / {}: no items avaible for item task", sGuildMgr->GetGuildById(guildId)->GetName().c_str(), player->GetName().c_str());
+        LOG_ERROR("playerbots",  "{} / {}: no items available for item task", sGuildMgr->GetGuildById(guildId)->GetName().c_str(), player->GetName().c_str());
         return false;
     }
 
@@ -194,6 +201,7 @@ bool GuildTaskMgr::CreateItemTask(Player* player, uint32 guildId)
     return true;
 }
 
+// Create a kill task for a player
 bool GuildTaskMgr::CreateKillTask(Player* player, uint32 guildId)
 {
     if (!player)
@@ -245,6 +253,7 @@ bool GuildTaskMgr::CreateKillTask(Player* player, uint32 guildId)
     return true;
 }
 
+// Send an advertisement for a guild task
 bool GuildTaskMgr::SendAdvertisement(CharacterDatabaseTransaction& trans, uint32 owner, uint32 guildId)
 {
     Guild* guild = sGuildMgr->GetGuildById(guildId);
@@ -269,6 +278,7 @@ bool GuildTaskMgr::SendAdvertisement(CharacterDatabaseTransaction& trans, uint32
     return false;
 }
 
+// Format time in a human-readable format
 std::string const formatTime(uint32 secs)
 {
     std::ostringstream out;
@@ -283,7 +293,8 @@ std::string const formatTime(uint32 secs)
     else if (secs < 3600 * 24)
     {
         out << secs / 3600 << " hr";
-    } else
+    }
+    else
     {
         out << secs / 3600 / 24 << " days";
     }
@@ -291,16 +302,18 @@ std::string const formatTime(uint32 secs)
     return out.str();
 }
 
+// Format date and time in a human-readable format
 std::string const formatDateTime(uint32 secs)
 {
     time_t rawtime = time(nullptr) + secs;
-    tm* timeinfo = localtime (&rawtime);
+    tm* timeinfo = localtime(&rawtime);
 
     char buffer[256];
     strftime(buffer, sizeof(buffer), "%b %d, %H:%M", timeinfo);
     return std::string(buffer);
 }
 
+// Get the greeting text for a guild task
 std::string const GetHelloText(uint32 owner)
 {
     ObjectGuid ownerGUID = ObjectGuid::Create<HighGuid::Player>(owner);
@@ -318,6 +331,7 @@ std::string const GetHelloText(uint32 owner)
     return body.str();
 }
 
+// Send an advertisement for an item task
 bool GuildTaskMgr::SendItemAdvertisement(CharacterDatabaseTransaction& trans, uint32 itemId, uint32 owner, uint32 guildId, uint32 validIn)
 {
     Guild* guild = sGuildMgr->GetGuildById(guildId);
@@ -352,6 +366,7 @@ bool GuildTaskMgr::SendItemAdvertisement(CharacterDatabaseTransaction& trans, ui
     return true;
 }
 
+// Send an advertisement for a kill task
 bool GuildTaskMgr::SendKillAdvertisement(CharacterDatabaseTransaction& trans, uint32 creatureId, uint32 owner, uint32 guildId, uint32 validIn)
 {
     Guild* guild = sGuildMgr->GetGuildById(guildId);
@@ -410,6 +425,7 @@ bool GuildTaskMgr::SendKillAdvertisement(CharacterDatabaseTransaction& trans, ui
     return true;
 }
 
+// Send thanks for a completed guild task
 bool GuildTaskMgr::SendThanks(CharacterDatabaseTransaction& trans, uint32 owner, uint32 guildId, uint32 payment)
 {
     Guild* guild = sGuildMgr->GetGuildById(guildId);
@@ -455,6 +471,7 @@ bool GuildTaskMgr::SendThanks(CharacterDatabaseTransaction& trans, uint32 owner,
     return false;
 }
 
+// Get the maximum item task count for a given item ID
 uint32 GuildTaskMgr::GetMaxItemTaskCount(uint32 itemId)
 {
     ItemTemplate const* proto = sObjectMgr->GetItemTemplate(itemId);
@@ -497,6 +514,7 @@ uint32 GuildTaskMgr::GetMaxItemTaskCount(uint32 itemId)
     return 1;
 }
 
+// Check if an item is a guild task item
 bool GuildTaskMgr::IsGuildTaskItem(uint32 itemId, uint32 guildId)
 {
     uint32 value = 0;
@@ -518,6 +536,7 @@ bool GuildTaskMgr::IsGuildTaskItem(uint32 itemId, uint32 guildId)
     return value;
 }
 
+// Get task values for a given owner and type
 std::map<uint32, uint32> GuildTaskMgr::GetTaskValues(uint32 owner, std::string const type, uint32* validIn /* = nullptr */)
 {
     std::map<uint32, uint32> results;
@@ -542,9 +561,10 @@ std::map<uint32, uint32> GuildTaskMgr::GetTaskValues(uint32 owner, std::string c
         } while (result->NextRow());
     }
 
-	return std::move(results);
+    return std::move(results);
 }
 
+// Get a task value for a given owner, guild ID, and type
 uint32 GuildTaskMgr::GetTaskValue(uint32 owner, uint32 guildId, std::string const type, uint32* validIn /* = nullptr */)
 {
     uint32 value = 0;
@@ -566,9 +586,10 @@ uint32 GuildTaskMgr::GetTaskValue(uint32 owner, uint32 guildId, std::string cons
             *validIn = secs;
     }
 
-	return value;
+    return value;
 }
 
+// Set a task value for a given owner, guild ID, and type
 uint32 GuildTaskMgr::SetTaskValue(uint32 owner, uint32 guildId, std::string const type, uint32 value, uint32 validIn)
 {
     PlayerbotsDatabasePreparedStatement* stmt = PlayerbotsDatabase.GetPreparedStatement(PLAYERBOTS_DEL_GUILD_TASKS);
@@ -592,6 +613,7 @@ uint32 GuildTaskMgr::SetTaskValue(uint32 owner, uint32 guildId, std::string cons
     return value;
 }
 
+// Handle console commands for guild tasks
 bool GuildTaskMgr::HandleConsoleCommand(ChatHandler* handler, char const* args)
 {
     if (!sPlayerbotAIConfig->guildTaskEnabled)
@@ -734,8 +756,7 @@ bool GuildTaskMgr::HandleConsoleCommand(ChatHandler* handler, char const* args)
                 LOG_INFO("playerbots", "{}: {} valid in {} [{}]",
                         charName.c_str(), name.str().c_str(), formatTime(validIn).c_str(), guild->GetName().c_str());
 
-            }
-            while (result->NextRow());
+            } while (result->NextRow());
         }
 
         return true;
@@ -743,8 +764,8 @@ bool GuildTaskMgr::HandleConsoleCommand(ChatHandler* handler, char const* args)
 
     if (cmd == "cleanup")
     {
-        sGuildTaskMgr->CleanupAdverts();
-        sGuildTaskMgr->RemoveDuplicatedAdverts();
+        sGuildTaskMgr->CleanupAdverts();  // Clean up old advertisements
+        sGuildTaskMgr->RemoveDuplicatedAdverts();  // Remove duplicate advertisements
         return true;
     }
 
@@ -808,6 +829,7 @@ bool GuildTaskMgr::HandleConsoleCommand(ChatHandler* handler, char const* args)
     return false;
 }
 
+// Check if an item task is completed
 bool GuildTaskMgr::CheckItemTask(uint32 itemId, uint32 obtained, Player* ownerPlayer, Player* bot, bool byMail)
 {
     if (!bot)
@@ -818,12 +840,12 @@ bool GuildTaskMgr::CheckItemTask(uint32 itemId, uint32 obtained, Player* ownerPl
         return false;
 
     uint32 owner = ownerPlayer->GetGUID().GetCounter();
-	Guild* guild = sGuildMgr->GetGuildById(bot->GetGuildId());
-	if (!guild)
-		return false;
+    Guild* guild = sGuildMgr->GetGuildById(bot->GetGuildId());
+    if (!guild)
+        return false;
 
-	if (!sRandomPlayerbotMgr->IsRandomBot(bot))
-	    return false;
+    if (!sRandomPlayerbotMgr->IsRandomBot(bot))
+        return false;
 
     LOG_DEBUG("playerbots", "{} / {}: checking guild task", guild->GetName().c_str(), ownerPlayer->GetName().c_str());
 
@@ -873,6 +895,7 @@ bool GuildTaskMgr::CheckItemTask(uint32 itemId, uint32 obtained, Player* ownerPl
     return true;
 }
 
+// Reward a player for completing a guild task
 bool GuildTaskMgr::Reward(CharacterDatabaseTransaction& trans, uint32 owner, uint32 guildId)
 {
     Guild* guild = sGuildMgr->GetGuildById(guildId);
@@ -967,6 +990,7 @@ bool GuildTaskMgr::Reward(CharacterDatabaseTransaction& trans, uint32 owner, uin
     return true;
 }
 
+// Check kill task for a player
 void GuildTaskMgr::CheckKillTask(Player* player, Unit* victim)
 {
     if (!player)
@@ -985,6 +1009,7 @@ void GuildTaskMgr::CheckKillTask(Player* player, Unit* victim)
     }
 }
 
+// Send completion message for a guild task
 void GuildTaskMgr::SendCompletionMessage(Player* player, std::string const verb)
 {
     std::ostringstream out;
@@ -1011,6 +1036,7 @@ void GuildTaskMgr::SendCompletionMessage(Player* player, std::string const verb)
     ChatHandler(player->GetSession()).PSendSysMessage(self.str().c_str());
 }
 
+// Check internal kill task for a player
 void GuildTaskMgr::CheckKillTaskInternal(Player* player, Unit* victim)
 {
     ObjectGuid::LowType owner = player->GetGUID().GetCounter();
@@ -1038,6 +1064,7 @@ void GuildTaskMgr::CheckKillTaskInternal(Player* player, Unit* victim)
     }
 }
 
+// Clean up old advertisements
 void GuildTaskMgr::CleanupAdverts()
 {
     uint32 deliverTime = time(nullptr) - sPlayerbotAIConfig->minGuildTaskChangeTime;
@@ -1064,6 +1091,7 @@ void GuildTaskMgr::CleanupAdverts()
     }
 }
 
+// Remove duplicate advertisements
 void GuildTaskMgr::RemoveDuplicatedAdverts()
 {
     uint32 deliverTime = time(nullptr);
@@ -1106,6 +1134,7 @@ void GuildTaskMgr::RemoveDuplicatedAdverts()
 
 }
 
+// Delete mail from database
 void GuildTaskMgr::DeleteMail(std::vector<uint32> buffer)
 {
     std::ostringstream sql;
@@ -1127,6 +1156,7 @@ void GuildTaskMgr::DeleteMail(std::vector<uint32> buffer)
     CharacterDatabase.Execute(sql.str().c_str());
 }
 
+// Check if a task transfer is valid
 bool GuildTaskMgr::CheckTaskTransfer(std::string const text, Player* ownerPlayer, Player* bot)
 {
     if (!bot)
@@ -1188,7 +1218,7 @@ bool GuildTaskMgr::CheckTaskTransfer(std::string const text, Player* ownerPlayer
                     SetTaskValue(owner, guildId, "activeTask", 0, 0);
                     SetTaskValue(owner, guildId, "payment", 0, 0);
 
-                    SendCompletionMessage(ownerPlayer, "transfered");
+                    SendCompletionMessage(ownerPlayer, "transferred");
                 }
             }
         } while (results->NextRow());

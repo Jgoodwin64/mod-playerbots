@@ -14,16 +14,26 @@ class PlayerbotAI;
 class CustomStrategy : public Strategy, public Qualified
 {
     public:
+        // Constructor for CustomStrategy
         CustomStrategy(PlayerbotAI* botAI);
 
+        // Initializes the triggers for the strategy
         void InitTriggers(std::vector<TriggerNode*> &triggers) override;
+        
+        // Gets the name of the strategy
         std::string const getName() override { return std::string("custom::" + qualifier); }
+        
+        // Resets the strategy
         void Reset();
 
+        // Cache for action lines
         static std::map<std::string, std::string> actionLinesCache;
 
     private:
+        // Stores the action lines for the strategy
         std::vector<std::string> actionLines;
+        
+        // Loads the action lines for the given owner
         void LoadActionLines(uint32 owner);
 };
 

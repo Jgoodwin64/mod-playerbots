@@ -19,154 +19,169 @@
 #include "raids/naxxramas/RaidNaxxActionContext.h"
 #include "raids/naxxramas/RaidNaxxTriggerContext.h"
 
+// Constructor for AiObjectContext
 AiObjectContext::AiObjectContext(PlayerbotAI* botAI) : PlayerbotAIAware(botAI)
 {
-    strategyContexts.Add(new StrategyContext());
-    strategyContexts.Add(new MovementStrategyContext());
-    strategyContexts.Add(new AssistStrategyContext());
-    strategyContexts.Add(new QuestStrategyContext());
-    strategyContexts.Add(new RaidStrategyContext());
+    strategyContexts.Add(new StrategyContext()); // Add strategy context
+    strategyContexts.Add(new MovementStrategyContext()); // Add movement strategy context
+    strategyContexts.Add(new AssistStrategyContext()); // Add assist strategy context
+    strategyContexts.Add(new QuestStrategyContext()); // Add quest strategy context
+    strategyContexts.Add(new RaidStrategyContext()); // Add raid strategy context
     
-    actionContexts.Add(new ActionContext());
-    actionContexts.Add(new ChatActionContext());
-    actionContexts.Add(new WorldPacketActionContext());
-    actionContexts.Add(new RaidActionContext());
-    actionContexts.Add(new RaidNaxxActionContext());
+    actionContexts.Add(new ActionContext()); // Add action context
+    actionContexts.Add(new ChatActionContext()); // Add chat action context
+    actionContexts.Add(new WorldPacketActionContext()); // Add world packet action context
+    actionContexts.Add(new RaidActionContext()); // Add raid action context
+    actionContexts.Add(new RaidNaxxActionContext()); // Add raid Naxxramas action context
 
-    triggerContexts.Add(new TriggerContext());
-    triggerContexts.Add(new ChatTriggerContext());
-    triggerContexts.Add(new WorldPacketTriggerContext());
-    triggerContexts.Add(new RaidTriggerContext());
-    triggerContexts.Add(new RaidNaxxTriggerContext());
+    triggerContexts.Add(new TriggerContext()); // Add trigger context
+    triggerContexts.Add(new ChatTriggerContext()); // Add chat trigger context
+    triggerContexts.Add(new WorldPacketTriggerContext()); // Add world packet trigger context
+    triggerContexts.Add(new RaidTriggerContext()); // Add raid trigger context
+    triggerContexts.Add(new RaidNaxxTriggerContext()); // Add raid Naxxramas trigger context
 
-    valueContexts.Add(new ValueContext());
+    valueContexts.Add(new ValueContext()); // Add value context
 
-    valueContexts.Add(sSharedValueContext);
+    valueContexts.Add(sSharedValueContext); // Add shared value context
 }
 
+// Update all contexts
 void AiObjectContext::Update()
 {
-    strategyContexts.Update();
-    triggerContexts.Update();
-    actionContexts.Update();
-    valueContexts.Update();
+    strategyContexts.Update(); // Update strategy contexts
+    triggerContexts.Update(); // Update trigger contexts
+    actionContexts.Update(); // Update action contexts
+    valueContexts.Update(); // Update value contexts
 }
 
+// Reset all contexts
 void AiObjectContext::Reset()
 {
-    strategyContexts.Reset();
-    triggerContexts.Reset();
-    actionContexts.Reset();
-    valueContexts.Reset();
+    strategyContexts.Reset(); // Reset strategy contexts
+    triggerContexts.Reset(); // Reset trigger contexts
+    actionContexts.Reset(); // Reset action contexts
+    valueContexts.Reset(); // Reset value contexts
 }
 
+// Save all created values
 std::vector<std::string> AiObjectContext::Save()
 {
     std::vector<std::string> result;
 
-    std::set<std::string> names = valueContexts.GetCreated();
+    std::set<std::string> names = valueContexts.GetCreated(); // Get created values
     for (std::set<std::string>::iterator i = names.begin(); i != names.end(); ++i)
     {
-        UntypedValue* value = GetUntypedValue(*i);
-        if (!value)
+        UntypedValue* value = GetUntypedValue(*i); // Get untyped value
+        if (!value) // Skip if value is null
             continue;
 
-        std::string const data = value->Save();
-        if (data == "?")
+        std::string const data = value->Save(); // Save value
+        if (data == "?") // Skip if data is "?"
             continue;
 
         std::string const name = *i;
         std::ostringstream out;
         out << name;
 
-        out << ">" << data;
-        result.push_back(out.str());
+        out << ">" << data; // Format value for saving
+        result.push_back(out.str()); // Add to result
     }
 
-    return result;
+    return result; // Return saved values
 }
 
+// Load values from data
 void AiObjectContext::Load(std::vector<std::string> data)
 {
     for (std::vector<std::string>::iterator i = data.begin(); i != data.end(); ++i)
     {
         std::string const row = *i;
-        std::vector<std::string> parts = split(row, '>');
-        if (parts.size() != 2)
+        std::vector<std::string> parts = split(row, '>'); // Split row into parts
+        if (parts.size() != 2) // Skip if parts size is not 2
             continue;
 
         std::string const name = parts[0];
         std::string const text = parts[1];
 
-        UntypedValue* value = GetUntypedValue(name);
-        if (!value)
+        UntypedValue* value = GetUntypedValue(name); // Get untyped value
+        if (!value) // Skip if value is null
             continue;
 
-        value->Load(text);
+        value->Load(text); // Load value
     }
 }
 
+// Get strategy by name
 Strategy* AiObjectContext::GetStrategy(std::string const name)
 {
-    return strategyContexts.GetContextObject(name, botAI);
+    return strategyContexts.GetContextObject(name, botAI); // Return strategy context object
 }
 
+// Get sibling strategies by name
 std::set<std::string> AiObjectContext::GetSiblingStrategy(std::string const name)
 {
-    return strategyContexts.GetSiblings(name);
+    return strategyContexts.GetSiblings(name); // Return sibling strategies
 }
 
+// Get trigger by name
 Trigger* AiObjectContext::GetTrigger(std::string const name)
 {
-    return triggerContexts.GetContextObject(name, botAI);
+    return triggerContexts.GetContextObject(name, botAI); // Return trigger context object
 }
 
+// Get action by name
 Action* AiObjectContext::GetAction(std::string const name)
 {
-    return actionContexts.GetContextObject(name, botAI);
+    return actionContexts.GetContextObject(name, botAI); // Return action context object
 }
 
+// Get untyped value by name
 UntypedValue* AiObjectContext::GetUntypedValue(std::string const name)
 {
-    return valueContexts.GetContextObject(name, botAI);
+    return valueContexts.GetContextObject(name, botAI); // Return untyped value context object
 }
 
+// Get created values
 std::set<std::string> AiObjectContext::GetValues()
 {
-    return valueContexts.GetCreated();
+    return valueContexts.GetCreated(); // Return created values
 }
 
+// Get supported strategies
 std::set<std::string> AiObjectContext::GetSupportedStrategies()
 {
-    return strategyContexts.supports();
+    return strategyContexts.supports(); // Return supported strategies
 }
 
+// Get supported actions
 std::set<std::string> AiObjectContext::GetSupportedActions()
 {
-    return actionContexts.supports();
+    return actionContexts.supports(); // Return supported actions
 }
 
+// Format values into a string
 std::string const AiObjectContext::FormatValues()
 {
     std::ostringstream out;
-    std::set<std::string> names = valueContexts.GetCreated();
+    std::set<std::string> names = valueContexts.GetCreated(); // Get created values
     for (std::set<std::string>::iterator i = names.begin(); i != names.end(); ++i, out << "|")
     {
-        UntypedValue* value = GetUntypedValue(*i);
-        if (!value)
+        UntypedValue* value = GetUntypedValue(*i); // Get untyped value
+        if (!value) // Skip if value is null
             continue;
 
-        std::string const text = value->Format();
-        if (text == "?")
+        std::string const text = value->Format(); // Format value
+        if (text == "?") // Skip if text is "?"
             continue;
 
-        out << "{" << *i << "=" << text << "}";
+        out << "{" << *i << "=" << text << "}"; // Add formatted value to output
     }
 
-    return out.str();
+    return out.str(); // Return formatted values
 }
 
+// Add shared values context
 void AiObjectContext::AddShared(NamedObjectContext<UntypedValue>* sharedValues)
 {
-    valueContexts.Add(sharedValues);
+    valueContexts.Add(sharedValues); // Add shared values context
 }

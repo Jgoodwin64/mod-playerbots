@@ -2,64 +2,66 @@
  * Copyright (C) 2016+ AzerothCore <www.azerothcore.org>, released under GNU GPL v2 license, you may redistribute it and/or modify it under version 2 of the License, or (at your option), any later version.
  */
 
-#include "AiFactory.h"
-#include "BattlegroundMgr.h"
-#include "Item.h"
-#include "PlayerbotAI.h"
-#include "PlayerbotAIConfig.h"
-#include "Playerbots.h"
-#include "Engine.h"
-#include "Group.h"
-#include "DKAiObjectContext.h"
-#include "PriestAiObjectContext.h"
-#include "MageAiObjectContext.h"
-#include "SharedDefines.h"
-#include "WarlockAiObjectContext.h"
-#include "WarriorAiObjectContext.h"
-#include "ShamanAiObjectContext.h"
-#include "PaladinAiObjectContext.h"
-#include "DruidAiObjectContext.h"
-#include "HunterAiObjectContext.h"
-#include "RogueAiObjectContext.h"
+#include "AiFactory.h"                    // Include the header for AiFactory class
+#include "BattlegroundMgr.h"              // Include the header for Battleground manager
+#include "Item.h"                         // Include the header for Item class
+#include "PlayerbotAI.h"                  // Include the header for PlayerbotAI class
+#include "PlayerbotAIConfig.h"            // Include the header for PlayerbotAI configuration
+#include "Playerbots.h"                   // Include the header for Playerbots class
+#include "Engine.h"                       // Include the header for Engine class
+#include "Group.h"                        // Include the header for Group class
+#include "DKAiObjectContext.h"            // Include the header for Death Knight AI context
+#include "PriestAiObjectContext.h"        // Include the header for Priest AI context
+#include "MageAiObjectContext.h"          // Include the header for Mage AI context
+#include "SharedDefines.h"                // Include shared definitions
+#include "WarlockAiObjectContext.h"       // Include the header for Warlock AI context
+#include "WarriorAiObjectContext.h"       // Include the header for Warrior AI context
+#include "ShamanAiObjectContext.h"        // Include the header for Shaman AI context
+#include "PaladinAiObjectContext.h"       // Include the header for Paladin AI context
+#include "DruidAiObjectContext.h"         // Include the header for Druid AI context
+#include "HunterAiObjectContext.h"        // Include the header for Hunter AI context
+#include "RogueAiObjectContext.h"         // Include the header for Rogue AI context
 
+// Function to create an AiObjectContext based on the player's class
 AiObjectContext* AiFactory::createAiObjectContext(Player* player, PlayerbotAI* botAI)
 {
-    switch (player->getClass())
+    switch (player->getClass())            // Check the class of the player
     {
         case CLASS_PRIEST:
-            return new PriestAiObjectContext(botAI);
+            return new PriestAiObjectContext(botAI);   // Return Priest AI context
         case CLASS_MAGE:
-            return new MageAiObjectContext(botAI);
+            return new MageAiObjectContext(botAI);     // Return Mage AI context
         case CLASS_WARLOCK:
-            return new WarlockAiObjectContext(botAI);
+            return new WarlockAiObjectContext(botAI);  // Return Warlock AI context
         case CLASS_WARRIOR:
-            return new WarriorAiObjectContext(botAI);
+            return new WarriorAiObjectContext(botAI);  // Return Warrior AI context
         case CLASS_SHAMAN:
-            return new ShamanAiObjectContext(botAI);
+            return new ShamanAiObjectContext(botAI);   // Return Shaman AI context
         case CLASS_PALADIN:
-            return new PaladinAiObjectContext(botAI);
+            return new PaladinAiObjectContext(botAI);  // Return Paladin AI context
         case CLASS_DRUID:
-            return new DruidAiObjectContext(botAI);
+            return new DruidAiObjectContext(botAI);    // Return Druid AI context
         case CLASS_HUNTER:
-            return new HunterAiObjectContext(botAI);
+            return new HunterAiObjectContext(botAI);   // Return Hunter AI context
         case CLASS_ROGUE:
-            return new RogueAiObjectContext(botAI);
+            return new RogueAiObjectContext(botAI);    // Return Rogue AI context
         case CLASS_DEATH_KNIGHT:
-            return new DKAiObjectContext(botAI);
+            return new DKAiObjectContext(botAI);       // Return Death Knight AI context
     }
 
-    return new AiObjectContext(botAI);
+    return new AiObjectContext(botAI);     // Default case: return base AiObjectContext
 }
 
+// Function to get the player's specialization tab
 uint8 AiFactory::GetPlayerSpecTab(Player* bot)
 {
-    std::map<uint8, uint32> tabs = GetPlayerSpecTabs(bot);
+    std::map<uint8, uint32> tabs = GetPlayerSpecTabs(bot); // Get the spec tabs for the player
 
     if (bot->getLevel() >= 10 && ((tabs[0] + tabs[1] + tabs[2]) > 0))
     {
         int8 tab = -1;
         uint32 max = 0;
-        for (uint32 i = 0; i < uint32(3); i++)
+        for (uint32 i = 0; i < uint32(3); i++)  // Find the tab with the maximum points
         {
             if (tab == -1 || max < tabs[i])
             {
@@ -68,13 +70,13 @@ uint8 AiFactory::GetPlayerSpecTab(Player* bot)
             }
         }
 
-        return tab;
+        return tab;   // Return the tab with the maximum points
     }
     else
     {
         uint8 tab = 0;
 
-        switch (bot->getClass())
+        switch (bot->getClass())  // Set default tab based on class if level < 10 or no points in tabs
         {
             case CLASS_MAGE:
                 tab = 1;
@@ -87,14 +89,15 @@ uint8 AiFactory::GetPlayerSpecTab(Player* bot)
                 break;
         }
 
-        return tab;
+        return tab;   // Return the default tab
     }
 }
 
+// Function to get the player's spec tabs and their points
 std::map<uint8, uint32> AiFactory::GetPlayerSpecTabs(Player* bot)
 {
-    std::map<uint8, uint32> tabs = {{0, 0}, {0, 0}, {0, 0}};
-    const PlayerTalentMap& talentMap = bot->GetTalentMap();
+    std::map<uint8, uint32> tabs = {{0, 0}, {0, 0}, {0, 0}};  // Initialize the tabs map
+    const PlayerTalentMap& talentMap = bot->GetTalentMap();   // Get the player's talent map
     for (PlayerTalentMap::const_iterator i = talentMap.begin(); i != talentMap.end(); ++i)
     {
         uint32 spellId = i->first;
@@ -113,9 +116,10 @@ std::map<uint8, uint32> AiFactory::GetPlayerSpecTabs(Player* bot)
         if (talentInfo->TalentTab == talentTabIds[1]) tabs[1]++;
         if (talentInfo->TalentTab == talentTabIds[2]) tabs[2]++;
     }
-    return tabs;
+    return tabs;  // Return the map of tabs and their points
 }
 
+// Function to get the player's roles based on their class and spec
 BotRoles AiFactory::GetPlayerRoles(Player* player)
 {
     BotRoles role = BOT_ROLE_NONE;
@@ -162,9 +166,10 @@ BotRoles AiFactory::GetPlayerRoles(Player* player)
             break;
     }
 
-    return role;
+    return role;  // Return the player's role
 }
 
+// Function to get the player's spec name based on their class and spec tab
 std::string AiFactory::GetPlayerSpecName(Player* player)
 {
     std::string specName;
@@ -255,9 +260,10 @@ std::string AiFactory::GetPlayerSpecName(Player* player)
             break;
     }
 
-    return specName;
+    return specName;  // Return the spec name
 }
 
+// Function to add default combat strategies to the engine based on the player's class and spec
 void AiFactory::AddDefaultCombatStrategies(Player* player, PlayerbotAI* const facade, Engine* engine)
 {
     uint8 tab = GetPlayerSpecTab(player);
@@ -456,13 +462,15 @@ void AiFactory::AddDefaultCombatStrategies(Player* player, PlayerbotAI* const fa
     }
 }
 
+// Function to create a combat engine for the player
 Engine* AiFactory::createCombatEngine(Player* player, PlayerbotAI* const facade, AiObjectContext* aiObjectContext)
 {
-	Engine* engine = new Engine(facade, aiObjectContext);
-    AddDefaultCombatStrategies(player, facade, engine);
-    return engine;
+	Engine* engine = new Engine(facade, aiObjectContext);  // Create a new engine
+    AddDefaultCombatStrategies(player, facade, engine);    // Add default combat strategies to the engine
+    return engine;  // Return the created engine
 }
 
+// Function to add default non-combat strategies to the engine based on the player's class and spec
 void AiFactory::AddDefaultNonCombatStrategies(Player* player, PlayerbotAI* const facade, Engine* nonCombatEngine)
 {
     uint8 tab = GetPlayerSpecTab(player);
@@ -672,17 +680,19 @@ void AiFactory::AddDefaultNonCombatStrategies(Player* player, PlayerbotAI* const
     }
 }
 
+// Function to create a non-combat engine for the player
 Engine* AiFactory::createNonCombatEngine(Player* player, PlayerbotAI* const facade, AiObjectContext* aiObjectContext)
 {
-	Engine* nonCombatEngine = new Engine(facade, aiObjectContext);
+	Engine* nonCombatEngine = new Engine(facade, aiObjectContext);  // Create a new non-combat engine
 
-    AddDefaultNonCombatStrategies(player, facade, nonCombatEngine);
-	return nonCombatEngine;
+    AddDefaultNonCombatStrategies(player, facade, nonCombatEngine);  // Add default non-combat strategies to the engine
+	return nonCombatEngine;  // Return the created non-combat engine
 }
 
+// Function to add default dead strategies to the engine
 void AiFactory::AddDefaultDeadStrategies(Player* player, PlayerbotAI* const facade, Engine* deadEngine)
 {
-    (void)facade;   // unused and remove warning
+    (void)facade;   // Unused parameter to avoid warning
     deadEngine->addStrategies("dead", "stay", "chat", "default", "follow", nullptr);
 
     if (sRandomPlayerbotMgr->IsRandomBot(player) && !player->GetGroup())
@@ -691,9 +701,10 @@ void AiFactory::AddDefaultDeadStrategies(Player* player, PlayerbotAI* const faca
     }
 }
 
+// Function to create a dead engine for the player
 Engine* AiFactory::createDeadEngine(Player* player, PlayerbotAI* const facade, AiObjectContext* AiObjectContext)
 {
-    Engine* deadEngine = new Engine(facade, AiObjectContext);
-    AddDefaultDeadStrategies(player, facade, deadEngine);
-    return deadEngine;
+    Engine* deadEngine = new Engine(facade, AiObjectContext);  // Create a new dead engine
+    AddDefaultDeadStrategies(player, facade, deadEngine);  // Add default dead strategies to the engine
+    return deadEngine;  // Return the created dead engine
 }

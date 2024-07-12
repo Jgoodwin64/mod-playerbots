@@ -16,14 +16,14 @@ class WorldPacket;
 class ExternalEventHelper
 {
     public:
-        ExternalEventHelper(AiObjectContext* aiObjectContext) : aiObjectContext(aiObjectContext) { }
+        ExternalEventHelper(AiObjectContext* aiObjectContext) : aiObjectContext(aiObjectContext) { } // Constructor for ExternalEventHelper
 
-        bool ParseChatCommand(std::string const command, Player* owner = nullptr);
-        void HandlePacket(std::map<uint16, std::string>& handlers, WorldPacket const& packet, Player* owner = nullptr);
-        bool HandleCommand(std::string const name, std::string const param, Player* owner = nullptr);
+        bool ParseChatCommand(std::string const command, Player* owner = nullptr); // Parse a chat command
+        void HandlePacket(std::map<uint16, std::string>& handlers, WorldPacket const& packet, Player* owner = nullptr); // Handle a packet
+        bool HandleCommand(std::string const name, std::string const param, Player* owner = nullptr); // Handle a command
 
     private:
-        AiObjectContext* aiObjectContext;
+        AiObjectContext* aiObjectContext; // AI object context
 };
 
 #endif
