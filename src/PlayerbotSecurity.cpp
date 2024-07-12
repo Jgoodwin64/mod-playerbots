@@ -7,14 +7,17 @@
 #include "PlayerbotAIConfig.h"
 #include "Playerbots.h"
 
+// Constructor for PlayerbotSecurity
 PlayerbotSecurity::PlayerbotSecurity(Player* const bot) : bot(bot)
 {
     if (bot)
         account = sCharacterCache->GetCharacterAccountIdByGuid(bot->GetGUID());
 }
 
+// Determines the security level for interactions with the bot
 PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* reason, bool ignoreGroup)
 {
+    // Allow all actions for game masters
     if (from->GetSession()->GetSecurity() >= SEC_GAMEMASTER)
         return PLAYERBOT_SECURITY_ALLOW_ALL;
 
@@ -22,6 +25,8 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
     if (!botAI) {
         return PLAYERBOT_SECURITY_DENY_ALL;
     }
+
+    // Deny actions if from player is an opposing faction
     if (botAI->IsOpposing(from))
     {
         if (reason)
@@ -30,8 +35,10 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
         return PLAYERBOT_SECURITY_DENY_ALL;
     }
 
+    // Check if bot is on a random account list
     if (sPlayerbotAIConfig->IsInRandomAccountList(account))
     {
+        // Recheck if bot is opposing after the random account list check
         if (botAI->IsOpposing(from))
         {
             if (reason)
@@ -40,6 +47,7 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
             return PLAYERBOT_SECURITY_DENY_ALL;
         }
 
+        // Uncomment this block if LFG state should be considered
         // if (sLFGMgr->GetState(bot->GetGUID()) != lfg::LFG_STATE_NONE)
         // {
         //     if (!bot->GetGuildId() || bot->GetGuildId() != from->GetGuildId())
@@ -51,6 +59,7 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
         //     }
         // }
 
+        // Check if the bot is in the same group
         Group* group = from->GetGroup();
         if (group)
         {
@@ -62,6 +71,7 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
             }
         }
 
+        // Check group invitation permissions
         if (sPlayerbotAIConfig->groupInvitationPermission <= 0) {
             if (reason)
                 *reason = PLAYERBOT_DENY_NONE;
@@ -69,6 +79,7 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
             return PLAYERBOT_SECURITY_TALK;
         }
 
+        // Check level difference for group invitations
         if (sPlayerbotAIConfig->groupInvitationPermission <= 1 && (int32)bot->getLevel() - (int8)from->getLevel() > 5)
         {
             if (!bot->GetGuildId() || bot->GetGuildId() != from->GetGuildId())
@@ -80,6 +91,7 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
             }
         }
 
+        // Check gear score difference
         int32 botGS = (int32)botAI->GetEquipGearScore(bot, false, false);
         int32 fromGS = (int32)botAI->GetEquipGearScore(from, false, false);
         if (sPlayerbotAIConfig->gearscorecheck)
@@ -92,6 +104,7 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
             }
         }
 
+        // Check if bot is in a battleground queue
         if (bot->InBattlegroundQueue())
         {
             if (!bot->GetGuildId() || bot->GetGuildId() != from->GetGuildId())
@@ -103,6 +116,7 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
             }
         }
 
+        // Uncomment this block if dead state should be considered
         /*if (bot->isDead())
         {
             if (reason)
@@ -111,9 +125,11 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
             return PLAYERBOT_SECURITY_TALK;
         }*/
 
+        // Check if bot is in a group
         group = bot->GetGroup();
         if (!group)
         {
+            // Uncomment this block if map distance should be considered
             /*if (bot->GetMapId() != from->GetMapId() || bot->GetDistance(from) > sPlayerbotAIConfig->whisperDistance)
             {
                 if (!bot->GetGuildId() || bot->GetGuildId() != from->GetGuildId())
@@ -131,6 +147,7 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
             return PLAYERBOT_SECURITY_INVITE;
         }
 
+        // Check if from player is in the same group
         for (GroupReference* gref = group->GetFirstMember(); gref; gref = gref->next())
         {
             Player* player = gref->GetSource();
@@ -138,6 +155,7 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
                 return PLAYERBOT_SECURITY_ALLOW_ALL;
         }
 
+        // Check if group is full
         if (group->IsFull())
         {
             if (reason)
@@ -146,6 +164,7 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
             return PLAYERBOT_SECURITY_TALK;
         }
 
+        // Check if bot is the group leader
         if (group->GetLeaderGUID() != bot->GetGUID())
         {
             if (reason)
@@ -170,6 +189,7 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
     return PLAYERBOT_SECURITY_ALLOW_ALL;
 }
 
+// Checks if the player meets the required security level for an action
 bool PlayerbotSecurity::CheckLevelFor(PlayerbotSecurityLevel level, bool silent, Player* from, bool ignoreGroup)
 {
     DenyReason reason = PLAYERBOT_DENY_NONE;

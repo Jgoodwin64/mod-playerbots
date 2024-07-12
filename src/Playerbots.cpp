@@ -26,11 +26,14 @@
 #include "RandomPlayerbotMgr.h"
 #include "ScriptMgr.h"
 
+// Database script for playerbots
 class PlayerbotsDatabaseScript : public DatabaseScript
 {
     public:
+        // Constructor
         PlayerbotsDatabaseScript() : DatabaseScript("PlayerbotsDatabaseScript") { }
 
+        // Function called when databases are loading
         bool OnDatabasesLoading() override
         {
             DatabaseLoader playerbotLoader("server.playerbots");
@@ -40,27 +43,32 @@ class PlayerbotsDatabaseScript : public DatabaseScript
             return playerbotLoader.Load();
         }
 
+        // Function to keep the database connection alive
         void OnDatabasesKeepAlive() override
         {
             PlayerbotsDatabase.KeepAlive();
         }
 
+        // Function called when databases are closing
         void OnDatabasesClosing() override
         {
             PlayerbotsDatabase.Close();
         }
 
+        // Function to warn about sync queries
         void OnDatabaseWarnAboutSyncQueries(bool apply) override
         {
             PlayerbotsDatabase.WarnAboutSyncQueries(apply);
         }
 
+        // Function called when selecting database index on logout
         void OnDatabaseSelectIndexLogout(Player* player, uint32& statementIndex, uint32& statementParam) override
         {
             statementIndex = CHAR_UPD_CHAR_ONLINE;
             statementParam = player->GetGUID().GetCounter();
         }
 
+        // Function to get the database revision
         void OnDatabaseGetDBRevision(std::string& revision) override
         {
             if (QueryResult resultPlayerbot = PlayerbotsDatabase.Query("SELECT date FROM version_db_playerbots ORDER BY date DESC LIMIT 1"))
@@ -76,11 +84,14 @@ class PlayerbotsDatabaseScript : public DatabaseScript
         }
 };
 
+// Metric script for playerbots
 class PlayerbotsMetricScript : public MetricScript
 {
     public:
+        // Constructor
         PlayerbotsMetricScript() : MetricScript("PlayerbotsMetricScript") { }
 
+        // Function called for metric logging
         void OnMetricLogging() override
         {
             if (sMetric->IsEnabled())
@@ -90,11 +101,14 @@ class PlayerbotsMetricScript : public MetricScript
         }
 };
 
+// Player script for handling player-related events with playerbots
 class PlayerbotsPlayerScript : public PlayerScript
 {
     public:
+        // Constructor
         PlayerbotsPlayerScript() : PlayerScript("PlayerbotsPlayerScript") { }
 
+        // Function called when a player logs in
         void OnLogin(Player* player) override
         {
             if (!player->GetSession()->IsBot())
@@ -104,6 +118,7 @@ class PlayerbotsPlayerScript : public PlayerScript
             }
         }
 
+        // Function called after player update
         void OnAfterUpdate(Player* player, uint32 diff) override
         {
             if (PlayerbotAI* botAI = GET_PLAYERBOT_AI(player))
@@ -117,6 +132,7 @@ class PlayerbotsPlayerScript : public PlayerScript
             }
         }
 
+        // Function to determine if a player can use chat
         bool CanPlayerUseChat(Player* player, uint32 type, uint32 /*lang*/, std::string& msg, Player* receiver) override
         {
             if (type == CHAT_MSG_WHISPER)
@@ -132,6 +148,7 @@ class PlayerbotsPlayerScript : public PlayerScript
             return true;
         }
 
+        // Function called when a player chats in a group
         void OnChat(Player* player, uint32 type, uint32 /*lang*/, std::string& msg, Group* group) override
         {
             for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
@@ -146,6 +163,7 @@ class PlayerbotsPlayerScript : public PlayerScript
             }
         }
 
+        // Function called when a player chats
         void OnChat(Player* player, uint32 type, uint32 /*lang*/, std::string& msg) override
         {
             if (type == CHAT_MSG_GUILD)
@@ -166,6 +184,7 @@ class PlayerbotsPlayerScript : public PlayerScript
             }
         }
 
+        // Function called when a player chats in a channel
         void OnChat(Player* player, uint32 type, uint32 /*lang*/, std::string& msg, Channel* channel) override
         {
             if (PlayerbotMgr* playerbotMgr = GET_PLAYERBOT_MGR(player))
@@ -179,6 +198,7 @@ class PlayerbotsPlayerScript : public PlayerScript
             sRandomPlayerbotMgr->HandleCommand(type, msg, player);
         }
 
+        // Function called before criteria progress is updated
         bool OnBeforeCriteriaProgress(Player* player, AchievementCriteriaEntry const* /*criteria*/) override
         {
             if (sRandomPlayerbotMgr->IsRandomBot(player))
@@ -188,6 +208,7 @@ class PlayerbotsPlayerScript : public PlayerScript
             return true;
         }
 
+        // Function called before achievement completion
         bool OnBeforeAchiComplete(Player* player, AchievementEntry const* /*achievement*/) override
         {
             if (sRandomPlayerbotMgr->IsRandomBot(player))
@@ -198,11 +219,14 @@ class PlayerbotsPlayerScript : public PlayerScript
         }
 };
 
+// Misc script for playerbots
 class PlayerbotsMiscScript : public MiscScript
 {
     public:
+        // Constructor
         PlayerbotsMiscScript() : MiscScript("PlayerbotsMiscScript", {MISCHOOK_ON_DESTRUCT_PLAYER}) { }
 
+        // Function called when a player is destructed
         void OnDestructPlayer(Player* player) override
         {
             if (PlayerbotAI* botAI = GET_PLAYERBOT_AI(player))
@@ -217,11 +241,14 @@ class PlayerbotsMiscScript : public MiscScript
         }
 };
 
+// Server script for playerbots
 class PlayerbotsServerScript : public ServerScript
 {
     public:
+        // Constructor
         PlayerbotsServerScript() : ServerScript("PlayerbotsServerScript") { }
 
+        // Function called when a packet is received
         void OnPacketReceived(WorldSession* session, WorldPacket const& packet) override
         {
             if (Player* player = session->GetPlayer())
@@ -230,11 +257,14 @@ class PlayerbotsServerScript : public ServerScript
         }
 };
 
+// World script for playerbots
 class PlayerbotsWorldScript : public WorldScript
 {
     public:
+        // Constructor
         PlayerbotsWorldScript() : WorldScript("PlayerbotsWorldScript") { }
 
+        // Function called before the world is initialized
         void OnBeforeWorldInitialized() override
         {
             uint32 oldMSTime = getMSTime();
@@ -249,11 +279,14 @@ class PlayerbotsWorldScript : public WorldScript
         }
 };
 
+// Script for handling various playerbot events
 class PlayerbotsScript : public PlayerbotScript
 {
     public:
+        // Constructor
         PlayerbotsScript() : PlayerbotScript("PlayerbotsScript") { }
 
+        // Function to check LFG queue for non-bots
         bool OnPlayerbotCheckLFGQueue(lfg::Lfg5Guids const& guidsList) override
         {
             bool nonBotFound = false;
@@ -270,18 +303,21 @@ class PlayerbotsScript : public PlayerbotScript
             return nonBotFound;
         }
 
+        // Function to check kill tasks for a playerbot
         void OnPlayerbotCheckKillTask(Player* player, Unit* victim) override
         {
             if (player)
                 sGuildTaskMgr->CheckKillTask(player, victim);
         }
 
+        // Function to check petition account for a playerbot
         void OnPlayerbotCheckPetitionAccount(Player* player, bool& found) override
         {
             if (found && GET_PLAYERBOT_AI(player))
                 found = false;
         }
 
+        // Function to check updates to send for a playerbot
         bool OnPlayerbotCheckUpdatesToSend(Player* player) override
         {
             if (PlayerbotAI* botAI = GET_PLAYERBOT_AI(player))
@@ -290,6 +326,7 @@ class PlayerbotsScript : public PlayerbotScript
             return true;
         }
 
+        // Function called when a packet is sent from a playerbot
         void OnPlayerbotPacketSent(Player* player, WorldPacket const* packet) override
         {
             if (!player)
@@ -305,12 +342,14 @@ class PlayerbotsScript : public PlayerbotScript
             }
         }
 
+        // Function called to update playerbot logic
         void OnPlayerbotUpdate(uint32 diff) override
         {
             sRandomPlayerbotMgr->UpdateAI(diff);
             sRandomPlayerbotMgr->UpdateSessions();
         }
 
+        // Function called to update playerbot sessions
         void OnPlayerbotUpdateSessions(Player* player) override
         {
             if (player)
@@ -318,6 +357,7 @@ class PlayerbotsScript : public PlayerbotScript
                     playerbotMgr->UpdateSessions();
         }
 
+        // Function called when a playerbot logs out
         void OnPlayerbotLogout(Player* player) override
         {
             if (PlayerbotMgr* playerbotMgr = GET_PLAYERBOT_MGR(player))
@@ -332,12 +372,14 @@ class PlayerbotsScript : public PlayerbotScript
             sRandomPlayerbotMgr->OnPlayerLogout(player);
         }
 
+        // Function called to log out all playerbots
         void OnPlayerbotLogoutBots() override
         {
             sRandomPlayerbotMgr->LogoutAllBots();
         }
 };
 
+// Function to add all playerbot scripts to the script manager
 void AddPlayerbotsScripts()
 {
     new PlayerbotsDatabaseScript();

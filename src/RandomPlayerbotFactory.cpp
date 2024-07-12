@@ -12,12 +12,16 @@
 #include "ScriptMgr.h"
 #include "SocialMgr.h"
 
+// Definition of the availableRaces map to hold the list of races for each class
 std::map<uint8, std::vector<uint8>> RandomPlayerbotFactory::availableRaces;
 
+// Constructor for RandomPlayerbotFactory
 RandomPlayerbotFactory::RandomPlayerbotFactory(uint32 accountId) : accountId(accountId)
 {
+    // Get the expansion level from the world configuration
     uint32 const expansion = sWorld->getIntConfig(CONFIG_EXPANSION);
 
+    // Populate available races for each class based on the expansion level
     availableRaces[CLASS_WARRIOR].push_back(RACE_HUMAN);
     availableRaces[CLASS_WARRIOR].push_back(RACE_NIGHTELF);
     availableRaces[CLASS_WARRIOR].push_back(RACE_GNOME);
@@ -117,10 +121,12 @@ RandomPlayerbotFactory::RandomPlayerbotFactory(uint32 accountId) : accountId(acc
     }
 }
 
+// Method to create a random bot
 Player* RandomPlayerbotFactory::CreateRandomBot(WorldSession* session, uint8 cls, std::unordered_map<uint8, std::vector<std::string>> names)
 {
     LOG_DEBUG("playerbots",  "Creating new random bot for class {}", cls);
 
+    // Determine gender and faction randomly
     uint8 gender = rand() % 2 ? GENDER_MALE : GENDER_FEMALE;
     uint8 alliance = rand() % 2;
     uint8 race;
@@ -159,6 +165,7 @@ Player* RandomPlayerbotFactory::CreateRandomBot(WorldSession* session, uint8 cls
     }
     CharacterDatabase.DirectExecute("UPDATE playerbots_names SET in_use=1 WHERE name='{}'", name);
 
+    // Vectors to hold customization options for the new character
     std::vector<uint8> skinColors, facialHairTypes;
     std::vector<std::pair<uint8,uint8>> faces, hairs;
     for (CharSectionsEntry const* charSection : sCharSectionsStore)
@@ -183,18 +190,21 @@ Player* RandomPlayerbotFactory::CreateRandomBot(WorldSession* session, uint8 cls
         }
     }
 
+    // Randomly select customization options
     uint8 skinColor = skinColors[urand(0, skinColors.size() - 1)];
     std::pair<uint8, uint8> face = faces[urand(0, faces.size() - 1)];
     std::pair<uint8, uint8> hair = hairs[urand(0, hairs.size() - 1)];
 
-	bool excludeCheck = (race == RACE_TAUREN) || (race == RACE_DRAENEI) || (gender == GENDER_FEMALE && race != RACE_NIGHTELF && race != RACE_UNDEAD_PLAYER);
-	uint8 facialHair = excludeCheck ? 0 : facialHairTypes[urand(0, facialHairTypes.size() - 1)];
+    // Check if facial hair should be excluded
+    bool excludeCheck = (race == RACE_TAUREN) || (race == RACE_DRAENEI) || (gender == GENDER_FEMALE && race != RACE_NIGHTELF && race != RACE_UNDEAD_PLAYER);
+    uint8 facialHair = excludeCheck ? 0 : facialHairTypes[urand(0, facialHairTypes.size() - 1)];
 
+    // Create the character
     std::unique_ptr<CharacterCreateInfo> characterInfo = std::make_unique<CharacterCreateInfo>(name, race, cls, gender, face.second, face.first, hair.first, hair.second, facialHair);
 
     Player* player = new Player(session);
     player->GetMotionMaster()->Initialize();
-	if (!player->Create(sObjectMgr->GetGenerator<HighGuid::Player>().Generate(), characterInfo.get()))
+    if (!player->Create(sObjectMgr->GetGenerator<HighGuid::Player>().Generate(), characterInfo.get()))
     {
         player->CleanupsBeforeDelete();
         delete player;
@@ -203,20 +213,24 @@ Player* RandomPlayerbotFactory::CreateRandomBot(WorldSession* session, uint8 cls
         return nullptr;
     }
 
+    // Set cinematic and login flags
     player->setCinematic(2);
     player->SetAtLoginFlag(AT_LOGIN_NONE);
 
+    // Special case for Death Knights to learn a spell
     if (player->getClass() == CLASS_DEATH_KNIGHT)
-	{
-		player->learnSpell(50977, false);
-	}
+    {
     // player->SaveToDB(true, false);
     // player->RewardQuest(const Quest *quest, uint32 reward, Object *questGiver)
+        player->learnSpell(50977, false);
+    }
+
     LOG_DEBUG("playerbots", "Random bot created for account {} - name: \"{}\"; race: {}; class: {}", accountId, name.c_str(), race, cls);
 
     return player;
 }
 
+// Method to create a random bot name
 std::string const RandomPlayerbotFactory::CreateRandomBotName(uint8 gender)
 {
     std::string botName = "";
@@ -254,6 +268,7 @@ std::string const RandomPlayerbotFactory::CreateRandomBotName(uint8 gender)
     return std::move(botName);
 }
 
+// Method to create random bots
 void RandomPlayerbotFactory::CreateRandomBots()
 {
     /* multi-thread here is meaningless? since the async db operations */
@@ -416,6 +431,7 @@ void RandomPlayerbotFactory::CreateRandomBots()
     LOG_INFO("server.loading", "{} random bot accounts with {} characters available", sPlayerbotAIConfig->randomBotAccounts.size(), totalRandomBotChars);
 }
 
+// Method to create random guilds
 void RandomPlayerbotFactory::CreateRandomGuilds()
 {
     std::vector<uint32> randomBots;
@@ -516,6 +532,7 @@ void RandomPlayerbotFactory::CreateRandomGuilds()
     LOG_INFO("playerbots", "{} random bot guilds available", guildNumber);
 }
 
+// Method to create a random guild name
 std::string const RandomPlayerbotFactory::CreateRandomGuildName()
 {
     std::string guildName = "";
@@ -545,6 +562,7 @@ std::string const RandomPlayerbotFactory::CreateRandomGuildName()
     return std::move(guildName);
 }
 
+// Method to create random arena teams
 void RandomPlayerbotFactory::CreateRandomArenaTeams()
 {
     std::vector<uint32> randomBots;
@@ -683,6 +701,7 @@ void RandomPlayerbotFactory::CreateRandomArenaTeams()
     LOG_INFO("playerbots", "{} random bot arena teams available", arenaTeamNumber);
 }
 
+// Method to create a random arena team name
 std::string const RandomPlayerbotFactory::CreateRandomArenaTeamName()
 {
     std::string arenaTeamName = "";

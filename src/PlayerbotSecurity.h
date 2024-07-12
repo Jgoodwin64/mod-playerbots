@@ -12,14 +12,16 @@
 
 class Player;
 
+// Enum representing different levels of security for player bot interactions
 enum PlayerbotSecurityLevel : uint32
 {
-    PLAYERBOT_SECURITY_DENY_ALL     = 0,
-    PLAYERBOT_SECURITY_TALK         = 1,
-    PLAYERBOT_SECURITY_INVITE       = 2,
-    PLAYERBOT_SECURITY_ALLOW_ALL    = 3
+    PLAYERBOT_SECURITY_DENY_ALL     = 0,  // Deny all actions
+    PLAYERBOT_SECURITY_TALK         = 1,  // Allow limited actions (e.g., talking)
+    PLAYERBOT_SECURITY_INVITE       = 2,  // Allow invitations to groups
+    PLAYERBOT_SECURITY_ALLOW_ALL    = 3   // Allow all actions
 };
 
+// Enum representing reasons for denying an action
 enum DenyReason
 {
     PLAYERBOT_DENY_NONE,
@@ -38,18 +40,23 @@ enum DenyReason
     PLAYERBOT_DENY_LFG
 };
 
+// Class handling the security levels for player bots
 class PlayerbotSecurity
 {
     public:
+        // Constructor
         PlayerbotSecurity(Player* const bot);
 
+        // Method to determine the security level for interactions from a specific player
         PlayerbotSecurityLevel LevelFor(Player* from, DenyReason* reason = nullptr, bool ignoreGroup = false);
+        
+        // Method to check if a player meets the required security level for an action
         bool CheckLevelFor(PlayerbotSecurityLevel level, bool silent, Player* from, bool ignoreGroup = false);
 
     private:
-        Player* const bot;
-        uint32 account;
-        std::map<ObjectGuid, std::map<std::string, time_t> > whispers;
+        Player* const bot;  // Pointer to the bot player
+        uint32 account;     // Account ID of the bot player
+        std::map<ObjectGuid, std::map<std::string, time_t> > whispers;  // Map to track whisper messages and their timestamps
 };
 
 #endif

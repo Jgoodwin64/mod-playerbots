@@ -2,11 +2,12 @@
  * Copyright (C) 2016+ AzerothCore <www.azerothcore.org>, released under GNU GPL v2 license, you may redistribute it and/or modify it under version 2 of the License, or (at your option), any later version.
  */
 
-#include "ChatHelper.h"
-#include "AiFactory.h"
-#include "Playerbots.h"
-#include "SpellInfo.h"
+#include "ChatHelper.h"  // Include the ChatHelper header file
+#include "AiFactory.h"   // Include the AiFactory header file
+#include "Playerbots.h"  // Include the Playerbots header file
+#include "SpellInfo.h"   // Include the SpellInfo header file
 
+// Initialize static member variables for various mappings
 std::map<std::string, uint32> ChatHelper::consumableSubClasses;
 std::map<std::string, uint32> ChatHelper::tradeSubClasses;
 std::map<std::string, uint32> ChatHelper::itemQualities;
@@ -18,21 +19,24 @@ std::map<uint8, std::string> ChatHelper::classes;
 std::map<uint8, std::string> ChatHelper::races;
 std::map<uint8, std::map<uint8, std::string> > ChatHelper::specs;
 
+// Template function to check if a searchTerm is a substring in a map's keys
 template<class T>
 static bool substrContainsInMap(std::string const searchTerm, std::map<std::string, T> searchIn)
 {
     for (typename std::map<std::string, T>::iterator i = searchIn.begin(); i != searchIn.end(); ++i)
     {
         std::string const term = i->first;
-		if (term.size() > 1 && searchTerm.find(term) != std::string::npos)
+        	if (term.size() > 1 && searchTerm.find(term) != std::string::npos)
             return true;
     }
 
     return false;
 }
 
+// Constructor for ChatHelper, initializing the base class and filling maps with predefined values
 ChatHelper::ChatHelper(PlayerbotAI* botAI) : PlayerbotAIAware(botAI)
 {
+    // Initialize item qualities
     itemQualities["poor"] = ITEM_QUALITY_POOR;
     itemQualities["gray"] = ITEM_QUALITY_POOR;
     itemQualities["normal"] = ITEM_QUALITY_NORMAL;
@@ -46,6 +50,7 @@ ChatHelper::ChatHelper(PlayerbotAI* botAI) : PlayerbotAIAware(botAI)
     itemQualities["legendary"] = ITEM_QUALITY_LEGENDARY;
     itemQualities["yellow"] = ITEM_QUALITY_LEGENDARY;
 
+    // Initialize consumable sub-classes
     consumableSubClasses["potion"] = ITEM_SUBCLASS_POTION;
     consumableSubClasses["elixir"] = ITEM_SUBCLASS_ELIXIR;
     consumableSubClasses["flask"] = ITEM_SUBCLASS_FLASK;
@@ -54,9 +59,10 @@ ChatHelper::ChatHelper(PlayerbotAI* botAI) : PlayerbotAIAware(botAI)
     consumableSubClasses["bandage"] = ITEM_SUBCLASS_BANDAGE;
     consumableSubClasses["enchant"] = ITEM_SUBCLASS_CONSUMABLE_OTHER;
 
+    // Initialize projectile sub-classes
     projectileSubClasses["arrows"] = ITEM_SUBCLASS_ARROW;
     projectileSubClasses["bullets"] = ITEM_SUBCLASS_BULLET;
-
+    
     //tradeSubClasses["cloth"] = ITEM_SUBCLASS_CLOTH;
     //tradeSubClasses["leather"] = ITEM_SUBCLASS_LEATHER;
     //tradeSubClasses["metal"] = ITEM_SUBCLASS_METAL_STONE;
@@ -70,7 +76,9 @@ ChatHelper::ChatHelper(PlayerbotAI* botAI) : PlayerbotAIAware(botAI)
     //tradeSubClasses["gems"] = ITEM_SUBCLASS_JEWELCRAFTING;
     //tradeSubClasses["jewels"] = ITEM_SUBCLASS_JEWELCRAFTING;
     //tradeSubClasses["jewelcrafting"] = ITEM_SUBCLASS_JEWELCRAFTING;
-
+    
+    // Initialize equipment slots
+    
     slots["head"] = EQUIPMENT_SLOT_HEAD;
     slots["neck"] = EQUIPMENT_SLOT_NECK;
     slots["shoulder"] = EQUIPMENT_SLOT_SHOULDERS;
@@ -91,6 +99,7 @@ ChatHelper::ChatHelper(PlayerbotAI* botAI) : PlayerbotAIAware(botAI)
     slots["ranged"] = EQUIPMENT_SLOT_RANGED;
     slots["tabard"] = EQUIPMENT_SLOT_TABARD;
 
+    // Initialize skills
     skills["first aid"] = SKILL_FIRST_AID;
     skills["fishing"] = SKILL_FISHING;
     skills["cooking"] = SKILL_COOKING;
@@ -105,6 +114,7 @@ ChatHelper::ChatHelper(PlayerbotAI* botAI) : PlayerbotAIAware(botAI)
     skills["skinning"] = SKILL_SKINNING;
     skills["jewelcrafting"] = SKILL_JEWELCRAFTING;
 
+    // Initialize chat message types
     chats["party"] = CHAT_MSG_PARTY;
     chats["p"] = CHAT_MSG_PARTY;
     chats["guild"] = CHAT_MSG_GUILD;
@@ -114,6 +124,7 @@ ChatHelper::ChatHelper(PlayerbotAI* botAI) : PlayerbotAIAware(botAI)
     chats["whisper"] = CHAT_MSG_WHISPER;
     chats["w"] = CHAT_MSG_WHISPER;
 
+    // Initialize class and specialization names
     classes[CLASS_DRUID] = "druid";
     specs[CLASS_DRUID][0] = "balance";
     specs[CLASS_DRUID][1] = "feral combat";
@@ -164,6 +175,7 @@ ChatHelper::ChatHelper(PlayerbotAI* botAI) : PlayerbotAIAware(botAI)
     specs[CLASS_DEATH_KNIGHT][1] = "frost";
     specs[CLASS_DEATH_KNIGHT][2] = "unholy";
 
+    // Initialize race names
     races[RACE_DWARF] = "Dwarf";
     races[RACE_GNOME] = "Gnome";
     races[RACE_HUMAN] = "Human";
@@ -176,14 +188,15 @@ ChatHelper::ChatHelper(PlayerbotAI* botAI) : PlayerbotAIAware(botAI)
     races[RACE_DRAENEI] = "Draenei";
 }
 
+// Format money from copper value to string representation
 std::string const ChatHelper::formatMoney(uint32 copper)
 {
     std::ostringstream out;
-	if (!copper)
-	{
-		out << "0";
-		return out.str();
-	}
+    	if (!copper)
+    	{
+    	   	out << "0";
+	        return out.str();
+ 	}
 
     uint32 gold = uint32(copper / 10000);
     copper -= (gold * 10000);
@@ -206,17 +219,18 @@ std::string const ChatHelper::formatMoney(uint32 copper)
         space = true;
     }
 
-	if (copper > 0 && gold < 10)
-	{
+    	if (copper > 0 && gold < 10)
+   	{
         if (space)
             out << " ";
 
-		out << copper <<  "c";
-	}
+        	out << copper <<  "c";
+    	}
 
     return out.str();
 }
 
+// Parse money from string representation to copper value
 uint32 ChatHelper::parseMoney(std::string const text)
 {
     // if user specified money in ##g##s##c format
@@ -252,6 +266,7 @@ uint32 ChatHelper::parseMoney(std::string const text)
     return copper;
 }
 
+// Parse item IDs from a text string
 ItemIds ChatHelper::parseItems(std::string const text)
 {
     ItemIds itemIds;
@@ -278,6 +293,7 @@ ItemIds ChatHelper::parseItems(std::string const text)
     return itemIds;
 }
 
+// Format a quest to a string representation
 std::string const ChatHelper::FormatQuest(Quest const* quest)
 {
     std::ostringstream out;
@@ -285,6 +301,7 @@ std::string const ChatHelper::FormatQuest(Quest const* quest)
     return out.str();
 }
 
+// Format a game object to a string representation
 std::string const ChatHelper::FormatGameobject(GameObject* go)
 {
     std::ostringstream out;
@@ -292,6 +309,7 @@ std::string const ChatHelper::FormatGameobject(GameObject* go)
     return out.str();
 }
 
+// Format a world object to a string representation
 std::string const ChatHelper::FormatWorldobject(WorldObject* wo)
 {
     std::ostringstream out;
@@ -300,6 +318,7 @@ std::string const ChatHelper::FormatWorldobject(WorldObject* wo)
     return out.str();
 }
 
+// Format a world entry to a string representation
 std::string const ChatHelper::FormatWorldEntry(int32 entry)
 {
     CreatureTemplate const* cInfo = nullptr;
@@ -324,6 +343,7 @@ std::string const ChatHelper::FormatWorldEntry(int32 entry)
     return out.str();
 }
 
+// Format a spell to a string representation
 std::string const ChatHelper::FormatSpell(SpellInfo const* spellInfo)
 {
     std::ostringstream out;
@@ -331,6 +351,7 @@ std::string const ChatHelper::FormatSpell(SpellInfo const* spellInfo)
     return out.str();
 }
 
+// Format an item to a string representation
 std::string const ChatHelper::FormatItem(ItemTemplate const* proto, uint32 count, uint32 total)
 {
     char color[32];
@@ -350,6 +371,7 @@ std::string const ChatHelper::FormatItem(ItemTemplate const* proto, uint32 count
     return out.str();
 }
 
+// Format a quest item to a string representation
 std::string const ChatHelper::FormatQItem(uint32 itemId)
 {
     char color[32];
@@ -363,6 +385,7 @@ std::string const ChatHelper::FormatQItem(uint32 itemId)
     return out.str();
 }
 
+// Parse chat message type from string representation
 ChatMsg ChatHelper::parseChat(std::string const text)
 {
     if (chats.find(text) != chats.end())
@@ -371,6 +394,7 @@ ChatMsg ChatHelper::parseChat(std::string const text)
     return CHAT_MSG_SYSTEM;
 }
 
+// Format chat message type to string representation
 std::string const ChatHelper::FormatChat(ChatMsg chat)
 {
     switch (chat)
@@ -390,13 +414,14 @@ std::string const ChatHelper::FormatChat(ChatMsg chat)
     return "unknown";
 }
 
-
+// Parse spell ID from string representation
 uint32 ChatHelper::parseSpell(std::string const text)
 {
     PlayerbotChatHandler handler(botAI->GetBot());
     return handler.extractSpellId(text);
 }
 
+// Parse game objects from a text string
 GuidVector ChatHelper::parseGameobjects(std::string const text)
 {
     GuidVector gos;
@@ -439,6 +464,7 @@ GuidVector ChatHelper::parseGameobjects(std::string const text)
     return gos;
 }
 
+// Format a quest objective to a string representation
 std::string const ChatHelper::FormatQuestObjective(std::string const name, uint32 available, uint32 required)
 {
     std::ostringstream out;
@@ -448,6 +474,7 @@ std::string const ChatHelper::FormatQuestObjective(std::string const name, uint3
     return out.str();
 }
 
+// Parse item quality from string representation
 uint32 ChatHelper::parseItemQuality(std::string const text)
 {
     if (itemQualities.find(text) == itemQualities.end())
@@ -456,6 +483,7 @@ uint32 ChatHelper::parseItemQuality(std::string const text)
     return itemQualities[text];
 }
 
+// Parse item class and sub-class from string representation
 bool ChatHelper::parseItemClass(std::string const text, uint32* itemClass, uint32* itemSubClass)
 {
     if (text == "questitem")
@@ -489,6 +517,7 @@ bool ChatHelper::parseItemClass(std::string const text, uint32* itemClass, uint3
     return false;
 }
 
+// Parse equipment slot from string representation
 uint32 ChatHelper::parseSlot(std::string const text)
 {
     if (slots.find(text) != slots.end())
@@ -497,6 +526,7 @@ uint32 ChatHelper::parseSlot(std::string const text)
     return EQUIPMENT_SLOT_END;
 }
 
+// Check if a string is parseable
 bool ChatHelper::parseable(std::string const text)
 {
     return text.find("|H") != std::string::npos || text == "questitem" || text == "ammo" || substrContainsInMap<uint32>(text, consumableSubClasses) ||
@@ -504,6 +534,7 @@ bool ChatHelper::parseable(std::string const text)
         substrContainsInMap<ChatMsg>(text, chats) || substrContainsInMap<uint32>(text, skills) || parseMoney(text) > 0;
 }
 
+// Format class and spec to string representation for a player
 std::string const ChatHelper::FormatClass(Player* player, int8 spec)
 {
     uint8 cls = player->getClass();
@@ -524,16 +555,19 @@ std::string const ChatHelper::FormatClass(Player* player, int8 spec)
     return out.str();
 }
 
+// Format class to string representation
 std::string const ChatHelper::FormatClass(uint8 cls)
 {
     return classes[cls];
 }
 
+// Format race to string representation
 std::string const ChatHelper::FormatRace(uint8 race)
 {
     return races[race];
 }
 
+// Parse skill from string representation
 uint32 ChatHelper::parseSkill(std::string const text)
 {
     if (skills.find(text) != skills.end())
@@ -542,6 +576,7 @@ uint32 ChatHelper::parseSkill(std::string const text)
     return SKILL_NONE;
 }
 
+// Format skill to string representation
 std::string const ChatHelper::FormatSkill(uint32 skill)
 {
     for (std::map<std::string, uint32>::iterator i = skills.begin(); i != skills.end(); ++i)
@@ -553,11 +588,13 @@ std::string const ChatHelper::FormatSkill(uint32 skill)
     return "";
 }
 
+// Format boolean flag to string representation
 std::string const ChatHelper::FormatBoolean(bool flag)
 {
     return flag ? "|cff00ff00ON|r" : "|cffffff00OFF|r";
 }
 
+// Erase all occurrences of a substring from a string
 void ChatHelper::eraseAllSubStr(std::string& mainStr, std::string const toErase)
 {
     size_t pos = std::string::npos;
