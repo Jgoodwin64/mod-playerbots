@@ -7,6 +7,7 @@
 
 #include "Common.h"  // Include common definitions and utilities
 
+=======
 // Standard library includes
 #include <map>       // Include the map container
 #include <vector>    // Include the vector container
@@ -16,6 +17,7 @@
 #include <sstream>   // Include string stream for string manipulation
 #include <stdio.h>   // Include standard I/O functions
 #include <string.h>  // Include string handling functions
+#include <algorithm>
 
 // Function to split a string into a vector of strings using a delimiter
 void split(std::vector<std::string>& dest, std::string const str, char const* delim)
