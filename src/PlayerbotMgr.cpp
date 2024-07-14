@@ -86,6 +86,12 @@ void PlayerbotHolder::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccountId
 // Handles the callback after the player bot login query completes
 void PlayerbotHolder::HandlePlayerBotLoginCallback(PlayerbotLoginQueryHolder const& holder)
 {
+    // has bot already been added?
+    Player* loginBot = ObjectAccessor::FindConnectedPlayer(holder.GetGuid());
+    if (loginBot && loginBot->IsInWorld()) {
+        return;
+    }
+
     uint32 botAccountId = holder.GetAccountId();
 
     // Create a new WorldSession for the bot
@@ -609,6 +615,13 @@ std::string const PlayerbotHolder::ProcessBotCommand(std::string const cmd, Obje
         return "ERROR: You can not use this command on non-summoned random bot.";
     }
 
+    if (!admin) {
+        Player* master = ObjectAccessor::FindConnectedPlayer(masterguid);
+        if (master && (master->IsInCombat() || bot->IsInCombat())) {
+            return "ERROR: You can not use this command during combat.";
+        }
+    }
+    
     if (GET_PLAYERBOT_AI(bot)) {
         if (Player* master = GET_PLAYERBOT_AI(bot)->GetMaster())
         {
